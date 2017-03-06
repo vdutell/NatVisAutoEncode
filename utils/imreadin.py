@@ -26,11 +26,11 @@ class vanHateren:
     I'm not sure if this is true for the VH images we are using, and how to properly normalize for this if not.
     """
 
-    def extract_images(self, filename, patch_edge_size=None, normalize=False):
+    def extract_images(self, filename, patch_edge_size=None, normalize_im=False,normalize_patch=False):
         with h5py.File(filename, "r") as f:
             full_img_data = np.array(f['van_hateren_good'], dtype=np.float32)
-            if(normalize):
-                print('normalizing...')
+            if(normalize_im):
+                print('normalizing full images...')
                 full_img_data = full_img_data - np.mean(full_img_data,axis=(1,2),keepdims=True)
                 full_img_data = full_img_data/np.std(full_img_data,axis=(1,2),keepdims=True)
             if patch_edge_size is not None:
@@ -50,6 +50,10 @@ class vanHateren:
                 data = np.asarray(np.split(data, num_px_rows/patch_edge_size,2)) #tile row-wise
                 data = np.transpose(np.reshape(np.transpose(data,(3,4,0,1,2)),(patch_edge_size,patch_edge_size,-1)),(2,0,1)) #stack tiles together
 
+            if(normalize_im):
+                print('normalizing patches...')
+                data = data - np.mean(data,axis=(1,2),keepdims=True)
+                data = data/np.std(data,axis=(1,2),keepdims=True)
             else:
                 data = full_img_data
                 self.num_patches = 0
