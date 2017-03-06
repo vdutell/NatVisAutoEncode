@@ -50,11 +50,10 @@ class vanHateren:
                 data = np.asarray(np.split(full_img_data, num_px_cols/patch_edge_size,2)) # tile column-wise
                 data = np.asarray(np.split(data, num_px_rows/patch_edge_size,2)) #tile row-wise
                 data = np.transpose(np.reshape(np.transpose(data,(3,4,0,1,2)),(patch_edge_size,patch_edge_size,-1)),(2,0,1)) #stack tiles together
-
-            if(normalize_im):
-                print('normalizing patches...')
-                data = data - np.mean(data,axis=(1,2),keepdims=True)
-                data = data/np.std(data,axis=(1,2),keepdims=True)
+                if(normalize_patch):
+                    print('normalizing patches...')
+                    data = data - np.mean(data,axis=(1,2),keepdims=True)
+                    data = data/np.std(data,axis=(1,2),keepdims=True)
             else:
                 data = full_img_data
                 self.num_patches = 0
