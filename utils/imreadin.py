@@ -12,9 +12,10 @@ class vanHateren:
     def __init__(self,
                  img_dir,
                  patch_edge_size=None,
-                 normalize=False,
+                 normalize_im=False,
+                 normalize_patch=False,
                  rand_state=np.random.RandomState()):
-        self.images = self.extract_images(img_dir, patch_edge_size, normalize)
+        self.images = self.extract_images(img_dir, patch_edge_size, normalize_im, normalize_patch)
 
     """
     adapted from Dylan Payton's code for Sparse coding here: https://github.com/dpaiton/FeedbackLCA/blob/master/data/input_data.py
@@ -26,7 +27,7 @@ class vanHateren:
     I'm not sure if this is true for the VH images we are using, and how to properly normalize for this if not.
     """
 
-    def extract_images(self, filename, patch_edge_size=None, normalize_im=False,normalize_patch=False):
+    def extract_images(self, filename, patch_edge_size=None, normalize_im=False, normalize_patch=False):
         with h5py.File(filename, "r") as f:
             full_img_data = np.array(f['van_hateren_good'], dtype=np.float32)
             if(normalize_im):
