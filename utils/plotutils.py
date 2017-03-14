@@ -35,36 +35,29 @@ Inpus:
   normalize: [bool] indicating whether the data should be streched (normalized)
     This is recommended for dictionary plotting.
   title: string for title of figure
-  prev_fig: tuple containing (fig, sub_axis, axis_image) from previous
-    display_data() call
-  TODO: Allow for color weight vis
 """
 def display_data_tiled(data, normalize=False, title="", prev_fig=None):
     if normalize:
         data = normalize_data(data)
     if len(data.shape) >= 3:
         data = pad_data(data)
-    if prev_fig is None:
-        plt.figure(figsize=(10,10))
-        fig, sub_axis = plt.subplots(1)
-        axis_image = sub_axis.imshow(data, cmap="Greys", interpolation="nearest")
-        axis_image.set_clim(vmin=-1.0, vmax=1.0)
-        # Turn off tick labels
-        sub_axis.set_yticklabels([])
-        sub_axis.set_xticklabels([])
-        cbar = fig.colorbar(axis_image)
-        sub_axis.tick_params(
-         axis="both",
-         bottom="off",
-         top="off",
-         left="off",
-         right="off")
-    else:
-        (fig, sub_axis, axis_image) = prev_fig
-        axis_image.set_data(data)
+
+    fig = plt.figure() #figsize=(10,10))
+    sub_axis = fig.add_subplot(1,1,1)
+    axis_image = sub_axis.imshow(data, 
+                                 cmap="Greys",
+                                 interpolation="nearest")
+    axis_image.set_clim(vmin=-1.0, vmax=1.0)
+    # Turn off tick labels
+    sub_axis.set_yticklabels([])
+    sub_axis.set_xticklabels([])
+    cbar = fig.colorbar(axis_image)
+    sub_axis.tick_params(
+        axis="both",
+        bottom="off",
+        top="off",
+        left="off",
+        right="off")
     fig.suptitle(title, y=1.05)
-    #if prev_fig is None:
-    #    fig.show()
-    #else:
-    #    fig.canvas.draw()
-    return #(fig, sub_axis, axis_image)
+    fig.canvas.draw()
+    return (fig, sub_axis, axis_image)
