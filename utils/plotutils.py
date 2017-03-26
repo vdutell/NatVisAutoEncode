@@ -16,7 +16,7 @@ def pad_data(data):
     padding = (((0, n ** 2 - data.shape[0]),
     (1, 1), (1, 1))                       # add some space between filters
     + ((0, 0),) * (data.ndim - 3))        # don't pad the last dimension (if there is one)
-    padded_data = np.pad(data, padding, mode="constant", constant_values=-1)
+    padded_data = np.pad(data, padding, mode="constant", constant_values=1)
     # tile the filters into an image
     padded_data = padded_data.reshape((n, n) + padded_data.shape[1:]).transpose((0, 2, 1, 3) + tuple(range(4, padded_data.ndim + 1)))
     padded_data = padded_data.reshape((n * padded_data.shape[1], n * padded_data.shape[3]) + padded_data.shape[4:])
@@ -45,8 +45,8 @@ def display_data_tiled(data, normalize=False, title="", prev_fig=None):
     fig = plt.figure() #figsize=(10,10))
     sub_axis = fig.add_subplot(1,1,1)
     axis_image = sub_axis.imshow(data, 
-                                 cmap="Greys",
-                                 interpolation="nearest")
+                                 cmap="Greys_r",
+                                 interpolation="none")
     axis_image.set_clim(vmin=-1.0, vmax=1.0)
     # Turn off tick labels
     sub_axis.set_yticklabels([])
