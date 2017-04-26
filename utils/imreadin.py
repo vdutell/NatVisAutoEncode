@@ -14,8 +14,9 @@ class vanHateren:
                  patch_edge_size=None,
                  normalize_im=False,
                  normalize_patch=False,
+                 invert_colors=False,
                  rand_state=np.random.RandomState()):
-        self.images = self.extract_images(img_dir, patch_edge_size, normalize_im, normalize_patch)
+        self.images = self.extract_images(img_dir, patch_edge_size, normalize_im, normalize_patch, invert_colors)
 
     """
     adapted from Dylan Payton's code for Sparse coding here: https://github.com/dpaiton/FeedbackLCA/blob/master/data/input_data.py
@@ -27,13 +28,16 @@ class vanHateren:
     I'm not sure if this is true for the VH images we are using, and how to properly normalize for this if not.
     """
 
-    def extract_images(self, filename, patch_edge_size=None, normalize_im=False, normalize_patch=False):
+    def extract_images(self, filename, patch_edge_size=None, normalize_im=False, normalize_patch=False, invert_colors=False):
         with h5py.File(filename, "r") as f:
             full_img_data = np.array(f['van_hateren_good'], dtype=np.float32)
             if(normalize_im):
                 print('normalizing full images...')
                 full_img_data = full_img_data - np.mean(full_img_data,axis=(1,2),keepdims=True)
                 full_img_data = full_img_data/np.std(full_img_data,axis=(1,2),keepdims=True)
+            if(invert_colors):
+                print('inverting colors...')
+                full_img_data = full_img_data*(-1)
             if patch_edge_size is not None:
                 print('sectioning into patches....')
                 #print(full_img_data.shape)
