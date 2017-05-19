@@ -97,14 +97,14 @@ def plotonoff(allws):
     plt.subplot(1,2,1,title='On')    
     oncolors = iter(plt.cm.jet(np.linspace(0,1,len(oncircs))))           
     for onc in oncircs: 
-        plt.contour(onc,[0.7],linewidths = 3,colors=[next(oncolors)])
+        plt.contour(onc,[0.99],linewidths = 3,colors=[next(oncolors)])
     plt.xticks([])
     plt.yticks([])
     
     plt.subplot(1,2,2,title='Off')
     offcolors = iter(plt.cm.jet(np.linspace(0,1,len(offcircs))))  
     for ofc in offcircs:
-        plt.contour(ofc,[.7], linewidths = 3, colors=[next(offcolors)])
+        plt.contour(ofc,[.99], linewidths = 3, colors=[next(offcolors)])
     plt.xticks([])
     plt.yticks([])
     plt.tight_layout()
