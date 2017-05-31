@@ -62,3 +62,40 @@ class vanHateren:
                 data = full_img_data
                 self.num_patches = 0
             return data
+        
+        
+        
+#Load in images 
+def loadimages(psz):
+    print("Loading Van Hateren Natural Image Database...")
+    vhimgs = vanHateren(
+        img_dir='../vanHaterenNaturalImages/VanHaterenNaturalImagesCurated.h5',
+        #normalize=True,
+        normalize_im = True,
+        normalize_patch = False,
+        invert_colors = False,
+        patch_edge_size=psz
+        )
+    print("Done Loading!")    
+    np.random.shuffle(vhimgs.images)
+    print("Done Shuffling!")
+    return(vhimgs, psz)
+
+#check for patchsize
+def check_n_load_ims(psz, iterations):
+    try:
+        vhimgs
+    except NameError:
+        vhimgs, loadedpatchsize = loadimages(psz)
+
+    if(psz != loadedpatchsize):
+        vhimgs, loadedpatchsize = loadimages(psz)
+
+    print("Images Loaded.")
+
+    #params of images
+    imxlen = len(vhimgs.images[0,0,:])
+    imylen = len(vhimgs.images[0,:,0])
+    nimages = len(vhimgs.images[:,0,0])
+    
+    return(vhimgs, nimages)

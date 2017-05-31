@@ -111,3 +111,88 @@ def plotonoff(allws):
     
     return(fig)
 
+
+
+
+def save_plots(aec,
+               cost_evolution,
+                wmean_evolution,
+                inweights_evolution,
+                outweights_evolution,
+                images,
+                recons,
+                final_inweights,
+                final_outweights):
+    
+    savefolder = aec.params['savefolder']
+
+    #Save our final weights
+    inweights_evolution_r = np.rollaxis(np.reshape(inweights_evolution,
+                                                 (len(inweights_evolution),
+                                                  aec.params['imxlen'],
+                                                  aec.params['imylen'],
+                                                  aec.params['nneurons'])),3,1)
+    (f,sa,ai) = display_data_tiled(inweights_evolution_r[-1], normalize=False, title="final_in_weights", prev_fig=None);
+    f.savefig(savefolder+'inweights_final.png')
+    plt.close()    
+    
+    outweights_evolution_r = np.reshape(outweights_evolution,
+                                         (len(outweights_evolution),
+                                          aec.params['nneurons'],
+                                          aec.params['imxlen'],
+                                          aec.params['imylen'])) #no rollaxis needed b/c shape is already nnuerons in pos 1.
+    
+    (f,sa,ai) = display_data_tiled(outweights_evolution_r[-1], normalize=False, title="final_out_weights", prev_fig=None);
+    f.savefig(savefolder+'outweights_final.png')
+    plt.close()
+
+    #save evolving weights
+    for i in range(len(inweights_evolution_r)):
+        (f,sa,ai) = display_data_tiled(inweights_evolution_r[i], normalize=False,title="inweights_evolving", prev_fig=None);
+        f.savefig(savefolder+'/inweights_evolution_'+str(i)+'.png')
+        plt.close()
+        
+        (f,sa,ai) = display_data_tiled(outweights_evolution_r[i], normalize=False,title="outweights_evolving", prev_fig=None);
+        f.savefig(savefolder+'/inweights_evolution_'+str(i)+'.png')
+        plt.close()
+        
+        
+      
+    #save weights and cost evolution
+    f2 = plt.figure(figsize=(6,6))
+    plt.subplot(2,1,1,title='Weights_Mean')
+    plt.plot(wmean_evolution)
+    plt.subplot(2,1,2,title='Objective')
+    plt.plot(cost_evolution)
+    plt.tight_layout()
+    f2.savefig(savefolder+'/cost_weights.png') 
+    plt.close()
+    
+    #show an example image and reconstruction from the last iteration of learning
+    patchnum = 3
+    plots = 4
+    f3 = plt.figure()
+    for i in range(plots):
+        plt.subplot(plots,2,2*i+1)#,title='Patch')
+        plt.imshow(images[-1][patchnum+i],cmap='gray',interpolation='none')
+        plt.axis('off')
+
+        plt.subplot(plots,2,2*i+2)#,title='Recon')
+        plt.imshow(recons[-1][patchnum+i],cmap='gray',interpolation='none')
+        plt.axis('off')
+
+    plt.tight_layout()
+    f3.savefig(savefolder+'/reconstruction.png') 
+    plt.close() 
+    
+    #save plots of on and off tiling
+    f4 = plotonoff(inweights_evolution_r[-1]);
+    f4.savefig(savefolder+'/final_in_on_off_RFs.png') 
+    plt.close()
+    
+    #save plots of on and off tiling
+    f5 = plotonoff(outweights_evolution_r[-1]);
+    f5.savefig(savefolder+'/final_out_on_off_RFs.png') 
+    plt.close()
+
+
