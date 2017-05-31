@@ -153,7 +153,7 @@ def save_plots(aec,
         plt.close()
         
         (f,sa,ai) = display_data_tiled(outweights_evolution_r[i], normalize=False,title="outweights_evolving", prev_fig=None);
-        f.savefig(savefolder+'/inweights_evolution_'+str(i)+'.png')
+        f.savefig(savefolder+'/outweights_evolution_'+str(i)+'.png')
         plt.close()
         
         
