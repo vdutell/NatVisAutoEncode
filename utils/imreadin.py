@@ -82,7 +82,7 @@ def loadimages(psz):
     return(vhimgs, psz)
 
 #check for patchsize
-def check_n_load_ims(psz, iterations):
+def check_n_load_ims(psz):
     try:
         vhimgs
     except NameError:
