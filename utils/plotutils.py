@@ -38,13 +38,24 @@ Inpus:
   title: string for title of figure
 """
 def display_data_tiled(data, normalize=False, title="", prev_fig=None):
+       
+    #Rescale data    
+    mean_data = np.mean(data)
+    min_data = np.amin(data)
+    max_data = np.amax(data)
+    #print ('M=', mean_data)
+    #print ('min_data=', min_data)
+    #print ('max_data=', max_data)
+    data = (((data-min_data)/(max_data-min_data))*2)-1
+    
     if normalize:
         data = normalize_data(data)
     if len(data.shape) >= 3:
         data = pad_data(data)
-
+        
     fig = plt.figure() #figsize=(10,10))
-    sub_axis = fig.add_subplot(1,1,1)
+    
+    sub_axis = fig.add_subplot(2,2,1)  
     axis_image = sub_axis.imshow(data, 
                                  cmap="Greys_r",
                                  interpolation="none")
@@ -58,11 +69,16 @@ def display_data_tiled(data, normalize=False, title="", prev_fig=None):
         bottom="off",
         top="off",
         left="off",
-        right="off")
+        right="off")  
+    
+    bar_chart = fig.add_subplot(2,2,3)
+    bar_chart.bar(range(0, len(mean_list)), mean_list, edgecolor = 'black', color = 'black')
+
     fig.suptitle(title, y=1.05)
     fig.canvas.draw()
+    #plt.show()
+    
     return (fig, sub_axis, axis_image)
-
 
 
 """
