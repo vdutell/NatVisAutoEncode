@@ -39,13 +39,15 @@ Inpus:
 """
 def display_data_tiled(data, normalize=False, title="", prev_fig=None):
        
+    #calculate mean of each picture of weights
+    mean_list =[]
+    for x in data:
+        mean_list.append(np.mean(np.absolute(x)))
+    
     #Rescale data    
     mean_data = np.mean(data)
     min_data = np.amin(data)
     max_data = np.amax(data)
-    #print ('M=', mean_data)
-    #print ('min_data=', min_data)
-    #print ('max_data=', max_data)
     data = (((data-min_data)/(max_data-min_data))*2)-1
     
     if normalize:
