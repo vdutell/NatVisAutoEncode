@@ -23,6 +23,12 @@ def pad_data(data):
     return padded_data
 
 
+def normalize_data(data):
+    norm_data = data.squeeze()
+    if np.max(np.abs(data)) > 0:
+        norm_data = (data / np.max(np.abs(data))).squeeze()
+    return norm_data
+
 
 """
 Author: Dylan Payton taken from FeedbackLCA code
