@@ -3,7 +3,6 @@ import numpy as np
 def readMov(path, frames, height, width, barwidth, patch_edge_size=None, time_size = None, normalize_patch=False):
     """
     Reads in a movie chunk form the van Hatteren database.
-
     Parameters
     ----------
     path  :   string indicating filepath to read from 
@@ -26,8 +25,6 @@ def readMov(path, frames, height, width, barwidth, patch_edge_size=None, time_si
     d = np.reshape(d,(frames,height,width))
     #remove black bar from top, and make the other side even too
     d = d[:,barwidth:,int(barwidth/2):-int(barwidth/2)]
-    #average each of 2 frames together
-    d = np.mean(np.array([d[::2,],d[::2,]]),axis=0)
     tr_frames, tr_height, tr_width = np.shape(d)
     #print(np.shape(d))
     

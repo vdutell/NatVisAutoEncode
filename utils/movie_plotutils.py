@@ -38,16 +38,19 @@ Inpus:
   title: string for title of figure
 """
 def display_data_tiled(data, normalize=False, title="", prev_fig=None):
-       
+ 
     #calculate mean of each picture of weights
     mean_list =[]
     for x in data:
         mean_list.append(np.mean(np.absolute(x)))
-    
+        
     #Rescale data    
     mean_data = np.mean(data)
     min_data = np.amin(data)
     max_data = np.amax(data)
+    #print ('M=', mean_data)
+    #print ('min_data=', min_data)
+    #print ('max_data=', max_data)
     data = (((data-min_data)/(max_data-min_data))*2)-1
     
     if normalize:
@@ -81,6 +84,7 @@ def display_data_tiled(data, normalize=False, title="", prev_fig=None):
     #plt.show()
     
     return (fig, sub_axis, axis_image)
+
 
 
 """
@@ -154,11 +158,11 @@ def save_plots(aec,
     f.savefig(savefolder+'inweights_final.png')
     plt.close()    
     
-    outweights_evolution_r = np.reshape(outweights_evolution,
-                                         (len(outweights_evolution),
-                                          aec.params['nneurons'],
-                                          aec.params['imxlen'],
-                                          aec.params['imylen'])) #no rollaxis needed b/c shape is already nnuerons in pos 1.
+    outweights_evolution_r = np.rollaxis(np.reshape(outweights_evolution,
+                                                  (len(inweights_evolution),
+                                                   aec.params['imxlen'],
+                                                   aec.params['imylen'],
+                                                   aec.params['nneurons'])),3,1)
     
     (f,sa,ai) = display_data_tiled(outweights_evolution_r[-1], normalize=False, title="final_out_weights", prev_fig=None);
     f.savefig(savefolder+'outweights_final.png')
@@ -186,21 +190,22 @@ def save_plots(aec,
     f2.savefig(savefolder+'/cost_weights.png') 
     plt.close()
     
-    #show an example image and reconstruction from the last iteration of learning
+    #show an example image and reconstruction 
     patchnum = 3
     plots = 4
     f3 = plt.figure()
-    for i in range(plots):
-        plt.subplot(plots,2,2*i+1)#,title='Patch')
-        plt.imshow(images[-1][patchnum+i],cmap='gray',interpolation='none')
-        plt.axis('off')
+    for i in range(len(inweights_evolution_r)):
+        for j in range(plots):
+            plt.subplot(plots,2,2*j+1)#,title='Patch')
+            plt.imshow(images[i][patchnum+j],cmap='gray',interpolation='none')
+            plt.axis('off')
 
-        plt.subplot(plots,2,2*i+2)#,title='Recon')
-        plt.imshow(recons[-1][patchnum+i],cmap='gray',interpolation='none')
-        plt.axis('off')
+            plt.subplot(plots,2,2*j+2)#,title='Recon')
+            plt.imshow(recons[i][patchnum+j],cmap='gray',interpolation='none')
+            plt.axis('off')
 
-    plt.tight_layout()
-    f3.savefig(savefolder+'/reconstruction.png') 
+        plt.tight_layout()
+        f3.savefig(savefolder+'/reconstruction_'+str(i)+'.png') 
     plt.close() 
     
     #save plots of on and off tiling
@@ -211,6 +216,4 @@ def save_plots(aec,
     #save plots of on and off tiling
     f5 = plotonoff(outweights_evolution_r[-1]);
     f5.savefig(savefolder+'/final_out_on_off_RFs.png') 
-    plt.close()
-
-
+plt.close()
