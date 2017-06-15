@@ -1,6 +1,6 @@
 import numpy as np
 
-def readMov(path, frames, height, width, barwidth, patch_edge_size=None, time_size = None, normalize_patch=False):
+def readMov(path, frames, height, width, barwidth, patch_edge_size=None, time_size = None, normalize_patch=False, normalize_movie=False):
     """
     Reads in a movie chunk form the van Hatteren database.
     Parameters
@@ -23,6 +23,13 @@ def readMov(path, frames, height, width, barwidth, patch_edge_size=None, time_si
 
     #put data back into a movie shape
     d = np.reshape(d,(frames,height,width))
+    
+    #normalize_movie
+    if(normalize_movie):
+        print('normalizing movie...')
+        d = d - np.mean(d)
+        d = d/np.std(d)
+        
     #remove black bar from top, and make the other side even too
     d = d[:,barwidth:,int(barwidth/2):-int(barwidth/2)]
     tr_frames, tr_height, tr_width = np.shape(d)
@@ -31,7 +38,7 @@ def readMov(path, frames, height, width, barwidth, patch_edge_size=None, time_si
     if (patch_edge_size != None):
         htiles = np.int(np.floor(tr_height/patch_edge_size))
         wtiles = np.int(np.floor(tr_width/patch_edge_size))
-        ftiles = np.int(np.floor(tr_frames/time_size))
+        ftiles = np.int(np.floor(tr_frames/time_size))    
         #print('height'+str(tr_width)+'patch'+str(patch_edge_size)+'htiles'+str(htiles))
         print(np.shape(d))
         print('making patches...')
