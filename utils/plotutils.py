@@ -186,7 +186,7 @@ def save_plots(aec,
     f2 = plt.figure(figsize=(6,6))
     plt.subplot(2,1,1,title='Weights_Mean')
     plt.plot(wmean_evolution)
-    plt.subplot(2,1,2,title='Objective')
+    plt.subplot(2,1,2,title='Cost')
     plt.plot(cost_evolution)
     plt.tight_layout()
     f2.savefig(savefolder+'/cost_weights.png') 
