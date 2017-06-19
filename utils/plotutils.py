@@ -110,7 +110,7 @@ def plotonoff(allws):
     offcircs = []
 
     for ws in allws:
-        circ = (ws>(0.99*np.sign(np.mean(ws))))
+        circ = (ws>(0.9*np.sign(np.mean(ws))))
         if(np.mean(ws)>0):
             oncircs.append(circ)
         else:
@@ -128,7 +128,7 @@ def plotonoff(allws):
     plt.subplot(1,2,2,title='Off')
     offcolors = iter(plt.cm.jet(np.linspace(0,1,len(offcircs))))  
     for ofc in offcircs:
-        plt.contour(ofc,[.7], linewidths = 3, colors=[next(offcolors)])
+        plt.contour(ofc,[0.7], linewidths = 3, colors=[next(offcolors)])
     plt.xticks([])
     plt.yticks([])
     plt.tight_layout()
@@ -199,10 +199,12 @@ def save_plots(aec,
     for i in range(plots):
         plt.subplot(plots,2,2*i+1)#,title='Patch')
         plt.imshow(images[-1][patchnum+i],cmap='gray',interpolation='none')
+        plt.colorbar()
         plt.axis('off')
 
         plt.subplot(plots,2,2*i+2)#,title='Recon')
         plt.imshow(recons[-1][patchnum+i],cmap='gray',interpolation='none')
+        plt.colorbar()
         plt.axis('off')
 
     plt.tight_layout()
