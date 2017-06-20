@@ -61,9 +61,9 @@ def display_data_tiled(data, normalize=False, title="", prev_fig=None):
     if len(data.shape) >= 3:
         data = pad_data(data)
         
-    fig = plt.figure() #figsize=(10,10))
+    fig = plt.figure(figsize=(10,10))
     
-    sub_axis = fig.add_subplot(2,2,1)  
+    sub_axis = fig.add_subplot(2,1,1)  
     axis_image = sub_axis.imshow(data, 
                                  cmap="Greys_r",
                                  interpolation="none")
@@ -79,10 +79,10 @@ def display_data_tiled(data, normalize=False, title="", prev_fig=None):
         left="off",
         right="off")  
     
-    bar_chart = fig.add_subplot(2,2,3)
+    bar_chart = fig.add_subplot(2,1,2)
     bar_chart.bar(range(0, len(mean_list)), mean_list, edgecolor = 'black', color = 'black')
 
-    fig.suptitle(title, y=1.05)
+    #fig.subtitle(title, y=1.05)
     fig.canvas.draw()
     #plt.show()
     
