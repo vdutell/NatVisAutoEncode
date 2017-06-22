@@ -1,6 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib
+import matplotlib.animation as animation
 
 """
 Author: Dylan Payton taken from FeedbackLCA code
@@ -11,16 +12,30 @@ Args:
   data: np.ndarray
 """
 
-def pad_data(data):
-    n = int(np.ceil(np.sqrt(data.shape[0])))
-    padding = (((0, n ** 2 - data.shape[0]),
-    (1, 1), (1, 1))                       # add some space between filters
-    + ((0, 0),) * (data.ndim - 3))        # don't pad the last dimension (if there is one)
-    padded_data = np.pad(data, padding, mode="constant", constant_values=1)
-    # tile the filters into an image
-    padded_data = padded_data.reshape((n, n) + padded_data.shape[1:]).transpose((0, 2, 1, 3) + tuple(range(4, padded_data.ndim + 1)))
-    padded_data = padded_data.reshape((n * padded_data.shape[1], n * padded_data.shape[3]) + padded_data.shape[4:])
-    return padded_data
+def pad_data(data_full):
+    
+    padded_data_full = np.empty((0,96,96))
+    
+    for data in data_full:
+        n = int(np.ceil(np.sqrt(data.shape[0])))
+        padding = (((0, n ** 2 - data.shape[0]),
+        (1, 1), (1, 1))                       # add some space between filters
+        + ((0, 0),) * (data.ndim - 3))        # don't pad the last dimension (if there is one)
+        padded_data = np.pad(data, padding, mode="constant", constant_values=1)
+        # tile the filters into an image
+        padded_data = padded_data.reshape((n, n) + padded_data.shape[1:]).transpose((0, 2, 1, 3) + tuple(range(4, padded_data.ndim + 1)))
+        padded_data = padded_data.reshape((n * padded_data.shape[1], n * padded_data.shape[3]) + padded_data.shape[4:])
+        
+        #print (np.shape([padded_data]))
+        #print (np.shape(padded_data_full))
+        padded_data_full = np.append(padded_data_full, [padded_data], axis=0)
+        
+        #print (type(padded_data))
+        
+    #padded_data_full = list(padded_data_full)    
+    #print (type(padded_data_full))
+             
+    return padded_data_full
 
 
 
@@ -36,6 +51,82 @@ Inpus:
   normalize: [bool] indicating whether the data should be streched (normalized)
     This is recommended for dictionary plotting.
   title: string for title of figure
+"""
+
+def calculate_data_to_plot(data, normalize=False):
+    
+    #print (data.shape)
+    #print (data)
+    
+    #calculate mean of each picture of weights
+    mean_list =[]
+    for t in range(len(data)):
+        mean_list.append([])
+        for x in data[t]:
+            mean_list[t].append(np.mean(np.absolute(x)))
+    #print (mean_list) 
+    #mean_list = list(mean_list)
+    #print (mean_list.shape)
+        
+    #Rescale data    
+    mean_data = np.mean(data)
+    min_data = np.amin(data)
+    max_data = np.amax(data)
+    #print ('M=', mean_data)
+    #print ('min_data=', min_data)
+    #print ('max_data=', max_data)
+    data = (((data-min_data)/(max_data-min_data))*2)-1
+    
+    if normalize:
+        data = normalize_data(data)
+    if len(data.shape) >= 3:
+        data = pad_data(data)
+    
+    #print (np.shape(data))
+    #print (data.shape)
+    
+    return (data, mean_list)
+
+
+def display_data_tiled(data, normalize=False, title="", prev_fig=None):
+    
+    data, mean_list = calculate_data_to_plot(data)
+                
+    fig = plt.figure() #figsize=(10,10))
+    
+    #print (data)
+    #print (np.shape(data))
+    
+    sub_axis = fig.add_subplot(2,2,1)  
+    axis_image = plt.imshow(data[0,:,:], cmap="Greys_r", interpolation="none", animated=True)
+    axis_image.set_clim(vmin=-1.0, vmax=1.0)
+    # Turn off tick labels
+    sub_axis.set_yticklabels([])
+    sub_axis.set_xticklabels([])
+    cbar = fig.colorbar(axis_image)
+    sub_axis.tick_params(
+        axis="both",
+        bottom="off",
+        top="off",
+        left="off",
+        right="off")  
+    
+    bar_chart = fig.add_subplot(2,2,3)
+    #print (len(mean_list))
+    bar_chart.bar(range(0, len(mean_list[0])), mean_list[0], edgecolor = 'black', color = 'black')
+
+    fig.suptitle(title, y=1.05)
+    fig.canvas.draw()   
+
+    
+    def updatefig(i):
+        axis_image.set_array(data[i,:,:])
+        return axis_image,
+
+    ani = animation.FuncAnimation(fig, updatefig, frames=range(len(data)), interval=50, blit=False)
+    
+    return ani
+
 """
 def display_data_tiled(data, normalize=False, title="", prev_fig=None):
  
@@ -84,7 +175,7 @@ def display_data_tiled(data, normalize=False, title="", prev_fig=None):
     #plt.show()
     
     return (fig, sub_axis, axis_image)
-
+"""
 
 
 """
@@ -151,31 +242,41 @@ def save_plots(aec,
     #Save our final weights
     inweights_evolution_r = np.rollaxis(np.reshape(inweights_evolution,
                                                  (len(inweights_evolution),
+                                                  aec.params['frames_per_channel'],
                                                   aec.params['imxlen'],
                                                   aec.params['imylen'],
-                                                  aec.params['nneurons'])),3,1)
-    (f,sa,ai) = display_data_tiled(inweights_evolution_r[-1], normalize=False, title="final_in_weights", prev_fig=None);
-    f.savefig(savefolder+'inweights_final.png')
+                                                  aec.params['nneurons'])),4,2)
+    #(f,sa,ai) = display_data_tiled(inweights_evolution_r[-1], normalize=False, title="final_in_weights", prev_fig=None);
+    #f.savefig(savefolder+'inweights_final.png')    
+    ani = display_data_tiled(inweights_evolution_r[-1], normalize=False, title="final_in_weights", prev_fig=None);
+    ani.save(savefolder+'inweights_final.mp4')
     plt.close()    
     
     outweights_evolution_r = np.rollaxis(np.reshape(outweights_evolution,
                                                   (len(inweights_evolution),
+                                                   aec.params['frames_per_channel'],
                                                    aec.params['imxlen'],
                                                    aec.params['imylen'],
-                                                   aec.params['nneurons'])),3,1)
+                                                   aec.params['nneurons'])),4,2)
     
-    (f,sa,ai) = display_data_tiled(outweights_evolution_r[-1], normalize=False, title="final_out_weights", prev_fig=None);
-    f.savefig(savefolder+'outweights_final.png')
+    #(f,sa,ai) = display_data_tiled(outweights_evolution_r[-1], normalize=False, title="final_out_weights", prev_fig=None);
+    #f.savefig(savefolder+'outweights_final.png')
+    ani = display_data_tiled(outweights_evolution_r[-1], normalize=False, title="final_out_weights", prev_fig=None);
+    ani.save(savefolder+'outweights_final.mp4')
     plt.close()
 
     #save evolving weights
     for i in range(len(inweights_evolution_r)):
-        (f,sa,ai) = display_data_tiled(inweights_evolution_r[i], normalize=False,title="inweights_evolving", prev_fig=None);
-        f.savefig(savefolder+'/inweights_evolution_'+str(i)+'.png')
+        #(f,sa,ai) = display_data_tiled(inweights_evolution_r[i], normalize=False,title="inweights_evolving", prev_fig=None);
+        #f.savefig(savefolder+'/inweights_evolution_'+str(i)+'.png')
+        ani = display_data_tiled(inweights_evolution_r[i], normalize=False,title="inweights_evolving", prev_fig=None);
+        ani.save(savefolder+'/inweights_evolution_'+str(i)+'.mp4')
         plt.close()
         
-        (f,sa,ai) = display_data_tiled(outweights_evolution_r[i], normalize=False,title="outweights_evolving", prev_fig=None);
-        f.savefig(savefolder+'/outweights_evolution_'+str(i)+'.png')
+        #(f,sa,ai) = display_data_tiled(outweights_evolution_r[i], normalize=False,title="outweights_evolving", prev_fig=None);
+        #f.savefig(savefolder+'/outweights_evolution_'+str(i)+'.png')
+        ani = display_data_tiled(outweights_evolution_r[i], normalize=False,title="outweights_evolving", prev_fig=None);
+        ani.save(savefolder+'/outweights_evolution_'+str(i)+'.mp4')      
         plt.close()
         
         
@@ -209,11 +310,11 @@ def save_plots(aec,
     plt.close() 
     
     #save plots of on and off tiling
-    f4 = plotonoff(inweights_evolution_r[-1]);
-    f4.savefig(savefolder+'/final_in_on_off_RFs.png') 
-    plt.close()
+    #f4 = plotonoff(inweights_evolution_r[-1]);
+    #f4.savefig(savefolder+'/final_in_on_off_RFs.png') 
+    #plt.close()
     
     #save plots of on and off tiling
-    f5 = plotonoff(outweights_evolution_r[-1]);
-    f5.savefig(savefolder+'/final_out_on_off_RFs.png') 
-plt.close()
+    #f5 = plotonoff(outweights_evolution_r[-1]);
+    #f5.savefig(savefolder+'/final_out_on_off_RFs.png') 
+    #plt.close()
