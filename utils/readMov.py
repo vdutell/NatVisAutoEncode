@@ -24,16 +24,17 @@ def readMov(path, frames, height, width, barwidth, patch_edge_size=None, time_si
     #put data back into a movie shape
     d = np.reshape(d,(frames,height,width))
     
-    #normalize_movie
-    if(normalize_movie):
-        print('normalizing movie...')
-        d = d - np.mean(d)
-        d = d/np.std(d)
         
     #remove black bar from top, and make the other side even too
     d = d[:,barwidth:,int(barwidth/2):-int(barwidth/2)]
     tr_frames, tr_height, tr_width = np.shape(d)
     #print(np.shape(d))
+    
+    #normalize_movie
+    if(normalize_movie):
+        print('normalizing movie...')
+        d = d - np.mean(d)
+        d = d/np.std(d)
     
     if (patch_edge_size != None):
         htiles = np.int(np.floor(tr_height/patch_edge_size))
