@@ -30,6 +30,9 @@ def readMov(path, frames, height, width, barwidth, patch_edge_size=None, time_si
     tr_frames, tr_height, tr_width = np.shape(d)
     #print(np.shape(d))
     
+    #video is in PAL format (interlaced?) take this into account by taking average of every other frame
+    d = np.mean(np.array([d[::2,],d[1::2,]]),axis=0)
+
     #normalize_movie
     if(normalize_movie):
         print('normalizing movie...')
