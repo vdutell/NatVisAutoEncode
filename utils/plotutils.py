@@ -48,13 +48,14 @@ def display_data_tiled(data, normalize=False, title="", prev_fig=None):
     #calculate mean of each picture of weights
     mean_list =[]
     for x in data:
-        mean_list.append(np.mean(np.absolute(x)))
+        mean_list.append(np.linalg.norm(np.reshape(x,-1),ord=2))
+        #mean_list.append(np.linalg.norm(np.reshape(x,-1)))
     
     #Rescale data    
-    #mean_data = np.mean(data)
-    #min_data = np.amin(data)
-    #max_data = np.amax(data)
-    #data = (((data-min_data)/(max_data-min_data))*2)-1
+    mean_data = np.mean(data)
+    min_data = np.amin(data)
+    max_data = np.amax(data)
+    data = (((data-min_data)/(max_data-min_data))*2)-1
     
     if normalize:
         data = normalize_data(data)
@@ -139,6 +140,7 @@ def plotonoff(allws):
 
 
 def save_plots(aec,
+               activations,
                cost_evolution,
                 wmean_evolution,
                 inweights_evolution,
@@ -180,8 +182,13 @@ def save_plots(aec,
         f.savefig(savefolder+'/outweights_evolution_'+str(i)+'.png')
         plt.close()
         
-        
-      
+    #save plot of activations
+    f8 = plt.figure(figsize=(6,6))
+    plt.plot(activations)
+    plt.title('Activations')
+    f8.savefig(savefolder+'/activations.png') 
+    plt.close()
+    
     #save weights and cost evolution
     f2 = plt.figure(figsize=(6,6))
     plt.subplot(2,1,1,title='Weights_Mean')
