@@ -148,7 +148,9 @@ def save_plots(aec,
                 images,
                 recons,
                 final_inweights,
-                final_outweights):
+                final_outweights,
+                activation_evolution,
+                gamma_evolution):
     
     savefolder = aec.params['savefolder']
 
@@ -228,5 +230,15 @@ def save_plots(aec,
     f5 = plotonoff(outweights_evolution_r[-1]);
     f5.savefig(savefolder+'/final_out_on_off_RFs.png') 
     plt.close()
-
-
+    
+    #save plots of activation and gamma
+    for i in range(len(activation_evolution)):
+        f6 = plt.figure()
+        plt.bar(range(0, len(activation_evolution[i])), activation_evolution[i], edgecolor = 'black', color = 'black')
+        f6.savefig(savefolder+'/activation_'+str(i)+'.png')
+        plt.close()
+    for i in range(len(gamma_evolution)):
+        f7 = plt.figure()
+        plt.bar(range(0, len(gamma_evolution[i])), gamma_evolution[i], edgecolor = 'black', color = 'black')
+        f7.savefig(savefolder+'/gamma_'+str(i)+'.png')
+        plt.close()
