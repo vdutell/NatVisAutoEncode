@@ -233,6 +233,7 @@ def save_plots(aec,
     f5.savefig(savefolder+'/final_out_on_off_RFs.png') 
     plt.close()
     
+    
     #save plots of activation and gamma
     for i in range(len(activation_evolution)):
         f6 = plt.figure()
