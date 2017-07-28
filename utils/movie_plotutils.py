@@ -12,9 +12,10 @@ Args:
   data: np.ndarray
 """
 
+#take the normalized weight matrix and reformate for plotting
 def pad_data(data_full):
     
-    padded_data_full = np.empty((0,96,96))
+    padded_data_full = np.empty((0,96,96)) #space needed for plotting (2+10)*8
     
     for data in data_full:
         n = int(np.ceil(np.sqrt(data.shape[0])))
@@ -26,8 +27,6 @@ def pad_data(data_full):
         padded_data = padded_data.reshape((n, n) + padded_data.shape[1:]).transpose((0, 2, 1, 3) + tuple(range(4, padded_data.ndim + 1)))
         padded_data = padded_data.reshape((n * padded_data.shape[1], n * padded_data.shape[3]) + padded_data.shape[4:])
         
-        #print (np.shape([padded_data]))
-        #print (np.shape(padded_data_full))
         padded_data_full = np.append(padded_data_full, [padded_data], axis=0)
         
         #print (type(padded_data))
@@ -53,37 +52,32 @@ Inpus:
   title: string for title of figure
 """
 
+#calculate mean and data (frames of kernel) from weight matrix
 def calculate_data_to_plot(data, normalize=False):
-    
-    #print (data.shape)
-    #print (data)
-    
+
     #calculate mean of each picture of weights
     mean_list =[]
     for t in range(len(data)):
         mean_list.append([])
         for x in data[t]:
             mean_list[t].append(np.mean(np.absolute(x)))
-    #print (mean_list) 
-    #mean_list = list(mean_list)
-    #print (mean_list.shape)
         
-    #Rescale data    
-    mean_data = np.mean(data)
-    min_data = np.amin(data)
-    max_data = np.amax(data)
-    #print ('M=', mean_data)
-    #print ('min_data=', min_data)
-    #print ('max_data=', max_data)
-    data = (((data-min_data)/(max_data-min_data))*2)-1
+    
     
     if normalize:
         data = normalize_data(data)
+    else:
+        #Rescale data    
+        mean_data = np.mean(data)
+        min_data = np.amin(data)
+        max_data = np.amax(data)
+        #print ('M=', mean_data)
+        #print ('min_data=', min_data)
+        #print ('max_data=', max_data)
+        data = (((data-min_data)/(max_data-min_data))*2)-1
+        
     if len(data.shape) >= 3:
         data = pad_data(data)
-    
-    #print (np.shape(data))
-    #print (data.shape)
     
     return (data, mean_list)
 
