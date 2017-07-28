@@ -149,8 +149,10 @@ def save_plots(aec,
                 recons,
                 final_inweights,
                 final_outweights,
+                inbias_evolution,
                 activation_evolution,
-                gamma_evolution):
+                gamma_evolution,
+                gamma_assign_evolution):
     
     savefolder = aec.params['savefolder']
 
@@ -242,3 +244,15 @@ def save_plots(aec,
         plt.bar(range(0, len(gamma_evolution[i])), gamma_evolution[i], edgecolor = 'black', color = 'black')
         f7.savefig(savefolder+'/gamma_'+str(i)+'.png')
         plt.close()
+    for i in range(len(gamma_assign_evolution)):
+        f8 = plt.figure()
+        plt.bar(range(0, len(gamma_assign_evolution[i])), gamma_assign_evolution[i], edgecolor = 'black', color = 'black')
+        f8.savefig(savefolder+'/gamma_assign'+str(i)+'.png')
+        plt.close()
+    for i in range(len(inbias_evolution)):
+        f9 = plt.figure()
+        plt.bar(range(0, len(inbias_evolution[i])), inbias_evolution[i], edgecolor = 'black', color = 'black')
+        f9.savefig(savefolder+'/inbias_'+str(i)+'.png')
+        plt.close()
+        
+        
