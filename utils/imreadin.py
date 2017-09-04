@@ -69,7 +69,7 @@ class vanHateren:
 def loadimages(psz):
     print("Loading Van Hateren Natural Image Database...")
     vhimgs = vanHateren(
-        img_dir='/home/vasha/vanHaterenNaturalImages/VanHaterenNaturalImagesCurated.h5',
+        img_dir='/home/vasha/datasets/vanHaterenNaturalImages/VanHaterenNaturalImagesCurated.h5',
         #normalize=True,
         normalize_im = True,
         normalize_patch = False,
