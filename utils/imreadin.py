@@ -6,7 +6,7 @@ from scipy import io
 
 class imageFile:
     def __init__(self,
-                 img_dir,
+                 imset,
                  patch_edge_size=None,
                  normalize_im=False,
                  normalize_patch=False,
@@ -14,18 +14,21 @@ class imageFile:
                  rand_state=np.random.RandomState()):
  
         # readin images
-        self.images = self.extract_images(img_dir)    
+        self.images = self.extract_images(imset)    
         # process images
         self.images = self.process_images(self.images, patch_edge_size, 
                                           normalize_im, normalize_patch, invert_colors)
 
-    def extract_images(self, img_dir):
-        if('.h5' in img_dir):
-            with h5py.File(img_dir, "r") as f:
+    def extract_images(self, imset):
+        #load in our images
+        if(imset=='vanhateren'):
+            self.image_files = '/home/vasha/datasets/vanHaterenNaturalImages/VanHaterenNaturalImagesCurated.h5'
+            with h5py.File(self.image_files, "r") as f:
                 full_img_data = np.array(f['van_hateren_good'], dtype=np.float32) 
-        elif('.mat' in img_dir):
+        elif(imset=='kyoto'):
+            self.image_files = '/home/vasha/datasets/eizaburo-doi-kyoto_natim-c2015ff/*.mat'
             bw_ims = []
-            for file in glob.glob(img_dir,recursive=True):
+            for file in glob.glob(self.image_files,recursive=True):
                 mat = io.loadmat(file)
                 #short medium and long activations
                 sml_acts = np.array([mat['OS'],mat['OM'],mat['OL']])
@@ -79,10 +82,10 @@ class imageFile:
         
         
 #Load in images 
-def loadimages(img_dir, psz):
+def loadimages(imset, psz):
     print("Loading Natural Image Database...")
     vhimgs = imageFile(
-        img_dir = img_dir,
+        imset = imset,
         normalize_im = True,
         normalize_patch = False,
         invert_colors = False,
@@ -94,14 +97,14 @@ def loadimages(img_dir, psz):
     return(vhimgs, psz)
 
 #check for patchsize
-def check_n_load_ims(img_dir,psz):
+def check_n_load_ims(imset,psz):
     try:
         vhimgs
     except NameError:
-        vhimgs, loadedpatchsize = loadimages(img_dir, psz)
+        vhimgs, loadedpatchsize = loadimages(imset, psz)
 
     if(psz != loadedpatchsize):
-        vhimgs, loadedpatchsize = loadimages(img_dir, psz)
+        vhimgs, loadedpatchsize = loadimages(imset, psz)
 
     print("Images Loaded.")
 
