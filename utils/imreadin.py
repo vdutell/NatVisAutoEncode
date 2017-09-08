@@ -9,6 +9,7 @@ class imageFile:
                  imset,
                  patch_edge_size=None,
                  normalize_im=False,
+                 patch_multiplier = 1,
                  normalize_patch=False,
                  invert_colors=False,
                  rand_state=np.random.RandomState()):
@@ -16,8 +17,8 @@ class imageFile:
         # readin images
         self.images = self.extract_images(imset)    
         # process images
-        self.images = self.process_images(self.images, patch_edge_size, 
-                                          normalize_im, normalize_patch, invert_colors)
+        self.images = self.process_images(self.images, patch_edge_size, normalize_im, 
+                                          patch_multiplier, normalize_patch, invert_colors)
 
     def extract_images(self, imset):
         #load in our images
@@ -43,7 +44,8 @@ class imageFile:
             print('Unsupported Image Type')
         return(full_img_data)
             
-    def process_images(self, full_img_data, patch_edge_size=None, normalize_im=False, 
+    def process_images(self, full_img_data, patch_edge_size=None, 
+                       normalize_im=False, patch_multiplier = 1,
                        normalize_patch=False, invert_colors=False):  
             if(normalize_im):
                 print('normalizing full images...')
@@ -82,11 +84,12 @@ class imageFile:
         
         
 #Load in images 
-def loadimages(imset, psz):
+def loadimages(imset, psz, pm):
     print("Loading Natural Image Database...")
     vhimgs = imageFile(
         imset = imset,
         normalize_im = True,
+        patch_multiplier = pm,
         normalize_patch = False,
         invert_colors = False,
         patch_edge_size=psz
@@ -97,14 +100,14 @@ def loadimages(imset, psz):
     return(vhimgs, psz)
 
 #check for patchsize
-def check_n_load_ims(imset,psz):
+def check_n_load_ims(imset, psz, pm):
     try:
         vhimgs
     except NameError:
-        vhimgs, loadedpatchsize = loadimages(imset, psz)
+        vhimgs, loadedpatchsize = loadimages(imset, psz, pm)
 
     if(psz != loadedpatchsize):
-        vhimgs, loadedpatchsize = loadimages(imset, psz)
+        vhimgs, loadedpatchsize = loadimages(imset, psz, pm)
 
     print("Images Loaded.")
 
