@@ -110,7 +110,7 @@ def loadimages(imset, psz, pm):
     print("Done Loading!")    
     np.random.shuffle(vhimgs.images)
     print("Done Shuffling!")
-    return(vhimgs, psz)
+    return(vhimgs.images, psz)
 
 #check for patchsize
 def check_n_load_ims(imset, psz, pm):
@@ -120,8 +120,8 @@ def check_n_load_ims(imset, psz, pm):
     print("Images Ready.")
 
     #params of images
-    imxlen = len(vhimgs.images[0,0,:])
-    imylen = len(vhimgs.images[0,:,0])
-    nimages = len(vhimgs.images[:,0,0])
+    imxlen = len(vhimgs[0,0,:])
+    imylen = len(vhimgs[0,:,0])
+    nimages = len(vhimgs[:,0,0])
     
     return(vhimgs, nimages)
