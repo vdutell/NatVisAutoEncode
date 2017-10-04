@@ -167,11 +167,12 @@ def loadrecord(imset, patchsize, multiplier):
 
         img_1d = np.fromstring(img_string, dtype=np.float64)
         #print(img_1d.shape)
-        reconstructed_img = np.reshape(img_1d.reshape((patchsize, patchsize)),(-1,patchsize,patchsize))
+        reconstructed_img = img_1d.reshape((patchsize, patchsize))
 
         reconstructed_images.append(reconstructed_img)
 
-    return(reconstructed_img, patchsize)
+    reconstructed_images = np.array(reconstructed_images)
+    return(reconstructed_images, patchsize)
 
 #check for patchsize
 def check_n_load_ims(imset, psz, pm):
@@ -180,7 +181,7 @@ def check_n_load_ims(imset, psz, pm):
         vhimgs, loadedpatchsize = loadrecord(imset, psz, pm)
     except NameError:
         writerecord(imset, psz, pm)
-        vhimgs, loadedpatchsize = loadimages(imset, psz, pm)
+        vhimgs, loadedpatchsize = loadrecord(imset, psz, pm)
  
     print("Images Ready.")
     return(vhimgs, psz)
