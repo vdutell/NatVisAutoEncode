@@ -3,6 +3,7 @@ import numpy as np
 import h5py
 import glob
 from scipy import io
+import tensorflow as tf
 
 class imageFile:
     def __init__(self,
@@ -112,16 +113,70 @@ def loadimages(imset, psz, pm):
     print("Done Shuffling!")
     return(vhimgs.images, psz)
 
+
+def writerecord(imset,patchsize,multiplier):
+
+    #read in files
+    vhimgs = imr.loadimages(imset, patchsize, multiplier)
+    nimages = np.shape(vhimgs)[0]
+
+    #name our record
+    if(dataset == 'vanhateren'):
+        recordfile = "/home/vasha/datasets/vanHaterenNaturalImages/vanhateren_patches{}_{}x.tfrecords".format(patchsize,multiplier)
+    if(dataset == 'kyoto'):
+        recordfile = "/home/vasha/datasets/eizaburo-doi-kyoto_natim-c2015ff/kyotonormpatches{}_{}x.tfrecords".format(patchsize,multiplier)
+    
+    #write to file
+    def _bytes_feature(value):
+        return tf.train.Feature(bytes_list=tf.train.BytesList(value=[value]))
+
+    writer = tf.python_io.TFRecordWriter(recordfile)
+
+    for i in range(nimages):
+
+        img = vhimgs[i]
+        img_raw = img.tostring()
+
+        example = tf.train.Example(features=tf.train.Features(feature={
+                    'image_raw': _bytes_feature(img_raw)}))
+
+        writer.write(example.SerializeToString())
+
+    writer.close()
+
+
+def loadrecord(imset, patchsize, multiplier):
+    print("Loading Record: {}".format(imset))
+    if(imset == 'vanhateren'):
+        recordfile = "/home/vasha/datasets/vanHaterenNaturalImages/vanhateren_patches{}_{}x.tfrecords".format(patchsize,multiplier)
+    if(imset == 'kyoto'):
+        recordfile = "/home/vasha/datasets/eizaburo-doi-kyoto_natim-c2015ff/kyotonormpatches{}_{}x.tfrecords".format(patchsize,multiplier)
+    record_iterator = tf.python_io.tf_record_iterator(path=recordfile)
+
+    for string_record in record_iterator:
+
+        example = tf.train.Example()
+        example.ParseFromString(string_record)
+
+        img_string = (example.features.feature['image_raw']
+                      .bytes_list
+                      .value[0])
+
+        img_1d = np.fromstring(img_string, dtype=np.float64)
+        #print(img_1d.shape)
+        reconstructed_img = img_1d.reshape((patchsize, patchsize))
+
+        reconstructed_images.append(reconstructed_img)
+
+    return(reconstructed_img, patchsize)
+
 #check for patchsize
 def check_n_load_ims(imset, psz, pm):
-   
-    vhimgs, loadedpatchsize = loadimages(imset, psz, pm)
-
-    print("Images Ready.")
-
-    #params of images
-    imxlen = len(vhimgs[0,0,:])
-    imylen = len(vhimgs[0,:,0])
-    nimages = len(vhimgs[:,0,0])
     
-    return(vhimgs, nimages)
+    try:
+        vhimgs, loadedpatchsize = loadrecord(imset, psz, pm)
+    except NameError:
+        vhimgs, loadedpatchsize = loadimages(imset, psz, pm)
+ 
+    print("Images Ready.")
+    return(vhimgs, psz)
