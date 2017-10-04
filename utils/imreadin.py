@@ -114,10 +114,12 @@ def loadimages(imset, psz, pm):
     return(vhimgs.images, psz)
 
 
-def writerecord(imset,patchsize,multiplier):
+def writerecord(dataset,patchsize,multiplier):
+    
+    print('record not found for these parameters. Writing now.')
 
     #read in files
-    vhimgs = imr.loadimages(imset, patchsize, multiplier)
+    vhimgs = imr.loadimages(dataset, patchsize, multiplier)
     nimages = np.shape(vhimgs)[0]
 
     #name our record
@@ -143,7 +145,7 @@ def writerecord(imset,patchsize,multiplier):
         writer.write(example.SerializeToString())
 
     writer.close()
-
+    print('record written.')
 
 def loadrecord(imset, patchsize, multiplier):
     print("Loading Record: {}".format(imset))
@@ -153,6 +155,7 @@ def loadrecord(imset, patchsize, multiplier):
         recordfile = "/home/vasha/datasets/eizaburo-doi-kyoto_natim-c2015ff/kyotonormpatches{}_{}x.tfrecords".format(patchsize,multiplier)
     record_iterator = tf.python_io.tf_record_iterator(path=recordfile)
 
+    reconstructed_images = []
     for string_record in record_iterator:
 
         example = tf.train.Example()
@@ -164,7 +167,7 @@ def loadrecord(imset, patchsize, multiplier):
 
         img_1d = np.fromstring(img_string, dtype=np.float64)
         #print(img_1d.shape)
-        reconstructed_img = img_1d.reshape((patchsize, patchsize))
+        reconstructed_img = np.reshape(img_1d.reshape((patchsize, patchsize)),(-1,patchsize,patchsize))
 
         reconstructed_images.append(reconstructed_img)
 
@@ -176,6 +179,7 @@ def check_n_load_ims(imset, psz, pm):
     try:
         vhimgs, loadedpatchsize = loadrecord(imset, psz, pm)
     except NameError:
+        writerecord(imset, psz, pm)
         vhimgs, loadedpatchsize = loadimages(imset, psz, pm)
  
     print("Images Ready.")
