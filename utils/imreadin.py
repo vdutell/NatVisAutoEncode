@@ -14,7 +14,6 @@ class imageFile:
                  normalize_patch=False,
                  invert_colors=False,
                  rand_state=np.random.RandomState()):
- 
         # readin images
         self.images = self.extract_images(imset)    
         # process images
@@ -84,7 +83,7 @@ class imageFile:
                     offset_px = patch_edge_size/patch_multiplier # size in pixels of each offset
                     data.append(np.array(self.patch_maker(full_img_data, patch_edge_size,offset=offset_px*i)))
                 data = np.array(data)
-                data = np.reshape(data,(-1,np.shape(data)[2],np.shape(data)[3]))
+                data = np.reshape(data,(np.shape(data)[1],np.shape(data)[2],np.shape(data)[3]))
                 print('now we have {} patches'.format(np.shape(data)[0]))
                 self.num_patches = np.shape(data)[0]
             else:
@@ -147,12 +146,18 @@ def writerecord(dataset,patchsize,multiplier):
     writer.close()
     print('record written.')
 
-def loadrecord(imset, patchsize, multiplier):
-    print("Loading Record: {}".format(imset))
+def getrecordfilename(imset, patchsize, multiplier):
     if(imset == 'vanhateren'):
         recordfile = "/home/vasha/datasets/vanHaterenNaturalImages/vanhateren_patches{}_{}x.tfrecords".format(patchsize,multiplier)
     if(imset == 'kyoto'):
         recordfile = "/home/vasha/datasets/eizaburo-doi-kyoto_natim-c2015ff/kyotonormpatches{}_{}x.tfrecords".format(patchsize,multiplier)
+    return(recordfile)
+    
+def loadrecord(imset, patchsize, multiplier):
+    print("Loading Record: {}".format(imset))
+    
+    recordfile = getrecordfilename(imset, patchsize, multiplier)
+    
     record_iterator = tf.python_io.tf_record_iterator(path=recordfile)
 
     reconstructed_images = []
@@ -171,7 +176,7 @@ def loadrecord(imset, patchsize, multiplier):
 
         reconstructed_images.append(reconstructed_img)
 
-    reconstructed_images = np.array(reconstructed_images)
+    reconstructed_images = np.array(reconstructed_images).astype(np.float32)
     return(reconstructed_images, patchsize)
 
 #check for patchsize
@@ -182,6 +187,25 @@ def check_n_load_ims(imset, psz, pm):
     except NameError:
         writerecord(imset, psz, pm)
         vhimgs, loadedpatchsize = loadrecord(imset, psz, pm)
- 
+    
     print("Images Ready.")
     return(vhimgs, psz)
+
+def get_record_batch(filename_queue, psz, batchsize):
+    reader = tf.TFRecordReader()
+
+    _, serialized_example = reader.read(filename_queue)
+
+    features = tf.parse_single_example(
+        serialized_example,
+        features={
+            'image_raw': tf.FixedLenFeature([], tf.string)
+        })
+    #decode from binary and reshape to image size
+    image = tf.decode_raw(features['image_raw'], tf.float64)
+    image = tf.reshape(image,(psz,psz))
+    
+    #img_sz_constant = tf.constant((psz,psz),dypte=tf.float64)
+    
+    return(image)
+    
