@@ -13,7 +13,7 @@ class imageFile:
                  normalize_patch=False,
                  invert_colors=False,
                  rand_state=np.random.RandomState()):
- 
+        
         # readin images
         self.images = self.extract_images(imset)    
         # process images
@@ -39,7 +39,7 @@ class imageFile:
                 if(np.shape(bw_acts)[0] > np.shape(bw_acts)[1]):
                     bw_acts = bw_acts.T
                 bw_ims.append(np.array(bw_acts))
-            full_img_data = bw_ims
+            full_img_data = np.array(bw_ims)
         else:
             print('Unsupported Image Type')
         return(full_img_data)
@@ -97,11 +97,11 @@ class imageFile:
         
         
 #Load in images 
-def loadimages(imset, psz, pm):
+def loadimages(imset, psz, pm, norm=True):
     print("Loading Natural Image Database...")
     vhimgs = imageFile(
         imset = imset,
-        normalize_im = True,
+        normalize_im = norm,
         patch_multiplier = pm,
         normalize_patch = False,
         invert_colors = False,
@@ -114,7 +114,6 @@ def loadimages(imset, psz, pm):
 
 #check for patchsize
 def check_n_load_ims(imset, psz, pm):
-   
     vhimgs, loadedpatchsize = loadimages(imset, psz, pm)
 
     print("Images Ready.")

@@ -43,13 +43,20 @@ Inpus:
     This is recommended for dictionary plotting.
   title: string for title of figure
 """
-def display_data_tiled(data, normalize=False, title="", prev_fig=None):
+def display_data_tiled(data, normalize=False, title="", prev_fig=None, reorder=True):
        
     #calculate mean of each picture of weights
     mean_list =[]
     for x in data:
         mean_list.append(np.linalg.norm(np.reshape(x,-1),ord=2))
         #mean_list.append(np.linalg.norm(np.reshape(x,-1)))
+    mean_list = np.array(mean_list)
+    
+    #reorder basis functions and activations from most to least activated
+    if reorder:
+        order = np.argsort(-mean_list)
+        data = data[order]
+        mean_list = mean_list[order]
     
     #Rescale data    
     mean_data = np.mean(data)
@@ -111,7 +118,7 @@ def plotonoff(allws):
     offcircs = []
 
     for ws in allws:
-        circ = (ws>(0.9*np.sign(np.mean(ws))))
+        circ = (ws>(0.3*np.sign(np.mean(ws))))
         if(np.mean(ws)>0):
             oncircs.append(circ)
         else:
@@ -122,19 +129,19 @@ def plotonoff(allws):
     plt.subplot(1,2,1,title='On')    
     oncolors = iter(plt.cm.jet(np.linspace(0,1,len(oncircs))))           
     for onc in oncircs: 
-        plt.contour(onc,[0.7],linewidths = 3,colors=[next(oncolors)])
+        plt.contour(onc,[0.3],linewidths = 3,colors=[next(oncolors)])
     plt.xticks([])
     plt.yticks([])
     
     plt.subplot(1,2,2,title='Off')
     offcolors = iter(plt.cm.jet(np.linspace(0,1,len(offcircs))))  
     for ofc in offcircs:
-        plt.contour(ofc,[0.7], linewidths = 3, colors=[next(offcolors)])
+        plt.contour(ofc,[0.3], linewidths = 3, colors=[next(offcolors)])
     plt.xticks([])
     plt.yticks([])
     plt.tight_layout()
     
-    return(fig)
+    #return(fig)
 
 
 
