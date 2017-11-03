@@ -15,14 +15,15 @@ class imageFile:
                  rand_state=np.random.RandomState()):
         
         # readin images
-        self.images = self.extract_images(imset)    
+        self.images = self.extract_images(imset)
+        print(self.images.shape)
         # process images
         self.images = self.process_images(self.images, patch_edge_size, normalize_im, 
                                           patch_multiplier, normalize_patch, invert_colors)
 
     def extract_images(self, imset):
         #load in our images
-        if(imset=='vanhateren'):
+        if(imset=='vh_lognorm'):
             self.image_files = '/home/vasha/datasets/vanHaterenNaturalImages/VanHaterenNaturalImagesCurated.h5'
             with h5py.File(self.image_files, "r") as f:
                 full_img_data = np.array(f['van_hateren_good'], dtype=np.float32) 
@@ -40,10 +41,39 @@ class imageFile:
                     bw_acts = bw_acts.T
                 bw_ims.append(np.array(bw_acts))
             full_img_data = np.array(bw_ims)
+        elif(imset=='vh_corr'):
+            imc_dir = '/home/vasha/datasets/vanHaterenNaturalImages/pirsquared/vanhateren_imc/*.imc'
+            imdir = imc_dir #using optics corrected images
+
+            dim = [1024,1536]
+            full_img_data = []
+            for file in glob.glob(imdir,recursive=True)[:1000]:
+                dtype = np.dtype ('uint16').newbyteorder('>')
+                a = np.fromfile(file, dtype).reshape((dim))
+                full_img_data.append(np.array(a))
+            #normalize each image to max 1
+            full_img_data = full_img_data/(np.amax(full_img_data,axis=(1,2))[:,None,None])
+            #for j, im in enumerate(full_img_data):
+            #    full_img_data[j] = im/np.amax(im,axis=(0,1))
+            full_img_data = np.array(full_img_data)
+            
+        elif(imset=='vh_ncorr'):
+            iml_dir = '/home/vasha/datasets/vanHaterenNaturalImages/pirsquared/vanhateren_iml/*.iml'
+            imdir = iml_dir #using fully raw images
+            dim = [1024,1536]
+            ims = []
+            for file in glob.glob(imdir,recursive=True):
+                dtype = np.dtype ('uint16').newbyteorder('>')
+                a = np.fromfile(file, dtype).reshape((dim))
+                ims.append(np.array(a))
+            #normalize each image to max 1
+            ims = ims/(np.amax(ims,axis=(1,2))[:,None,None])
+            full_img_data = np.array(ims)
+            
         else:
-            print('Unsupported Image Type')
+            print('%s is an unsupported Image Type!!!'.format(imset))
         return(full_img_data)
-    
+
     def patch_maker(self, full_img_data, patch_edge_size, offset):
         (num_img, num_px_rows, num_px_cols) = full_img_data.shape
         #crop to patch rows
@@ -58,7 +88,7 @@ class imageFile:
         (num_img, num_px_rows, num_px_cols) = full_img_data.shape
         num_img_px = num_px_rows * num_px_cols
         #calc number of patches & calculate them
-        self.num_patches = int(num_img_px / patch_edge_size**2)                
+        self.num_patches = int(num_img_px / patch_edge_size**2)  
         data = np.asarray(np.split(full_img_data, num_px_cols/patch_edge_size,2)) # tile column-wise
         data = np.asarray(np.split(data, num_px_rows/patch_edge_size,2)) #tile row-wise
         data = np.transpose(np.reshape(np.transpose(data,(3,4,0,1,2)),(patch_edge_size,patch_edge_size,-1)),(2,0,1)) #stack tiles together
