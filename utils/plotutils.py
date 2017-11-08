@@ -1,7 +1,9 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib
-
+    
+import scipy.spatial.distance as scpd
+    
 """
 Author: Dylan Payton taken from FeedbackLCA code
 Pad data with ones for visualization
@@ -138,7 +140,24 @@ def plotonoff(allws):
     
     return(fig)
 
+def measure_plot_dist(weight_mat,norm,plot=True):
+    ## measures pairwise norm of hidden node weights.
+    ## Inputs:
+    ## weight_mat: matrix of weights of shape nneurons by input shape (input shape can be 1 or 2d)
+    ## norm: String describing the type of norm to take - see acceptible norms in documentation for scipy.spatial.distance.pdist
+    ## plot: Boolean indicating whether or not to plot the heatmat of the weight matrix.
+    
+    ## Outputs:
+    ## dist: a nneurons by nneurons matrix, with pairwise distances of the weight matrices in each element
+    ## optional plot of the distance matrix as a heatmap
 
+    fwv = weight_mat.reshape(weight_mat.shape[0],-1)
+    dist = scpd.pdist(fwv,norm) #'euclidean','hamming'
+    dist = scpd.squareform(dist)
+    if(plot==True):
+        plt.imshow(dist)
+        plt.colorbar()
+    return(dist)
 
 
 def save_plots(aec,
