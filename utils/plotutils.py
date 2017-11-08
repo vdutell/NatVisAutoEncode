@@ -43,20 +43,15 @@ Inpus:
     This is recommended for dictionary plotting.
   title: string for title of figure
 """
-def display_data_tiled(data, normalize=False, title="", prev_fig=None, reorder=True):
+def display_data_tiled(data, normalize=False, title="", prev_fig=None):
        
     #calculate mean of each picture of weights
     mean_list =[]
     for x in data:
         mean_list.append(np.linalg.norm(np.reshape(x,-1),ord=2))
         #mean_list.append(np.linalg.norm(np.reshape(x,-1)))
-    mean_list = np.array(mean_list)
     
-    #reorder basis functions and activations from most to least activated
-    if reorder:
-        order = np.argsort(-mean_list)
-        data = data[order]
-        mean_list = mean_list[order]
+    mean_list = np.array(mean_list)
     
     #Rescale data    
     mean_data = np.mean(data)
@@ -141,7 +136,7 @@ def plotonoff(allws):
     plt.yticks([])
     plt.tight_layout()
     
-    #return(fig)
+    return(fig)
 
 
 
@@ -154,8 +149,8 @@ def save_plots(aec,
                 outweights_evolution,
                 images,
                 recons,
-                final_inweights,
-                final_outweights,
+                final_inweights_ordered,
+                final_outweights_ordered,
                 inbias_evolution,
                 activation_evolution):
     
@@ -167,7 +162,7 @@ def save_plots(aec,
                                                   aec.params['imxlen'],
                                                   aec.params['imylen'],
                                                   aec.params['nneurons'])),3,1)
-    (f,sa,ai) = display_data_tiled(inweights_evolution_r[-1], normalize=True, title="final_in_weights", prev_fig=None);
+    (f,sa,ai) = display_data_tiled(inweights_evolution_r[-1], normalize=True, title="final_in_weights", prev_fig=None,reorder=True);
     f.savefig(savefolder+'inweights_final.png')
     plt.close()    
     
@@ -177,17 +172,17 @@ def save_plots(aec,
                                           aec.params['imxlen'],
                                           aec.params['imylen'])) #no rollaxis needed b/c shape is already nnuerons in pos 1.
     
-    (f,sa,ai) = display_data_tiled(outweights_evolution_r[-1], normalize=True, title="final_out_weights", prev_fig=None);
+    (f,sa,ai) = display_data_tiled(outweights_evolution_r[-1], normalize=True, title="final_out_weights", prev_fig=None,reorder=True);
     f.savefig(savefolder+'outweights_final.png')
     plt.close()
 
     #save evolving weights
     for i in range(len(inweights_evolution_r)):
-        (f,sa,ai) = display_data_tiled(inweights_evolution_r[i], normalize=True,title="inweights_evolving", prev_fig=None);
+        (f,sa,ai) = display_data_tiled(inweights_evolution_r[i], normalize=True,title="inweights_evolving", prev_fig=None,reorder=False);
         f.savefig(savefolder+'/inweights_evolution_'+str(i)+'.png')
         plt.close()
         
-        (f,sa,ai) = display_data_tiled(outweights_evolution_r[i], normalize=True,title="outweights_evolving", prev_fig=None);
+        (f,sa,ai) = display_data_tiled(outweights_evolution_r[i], normalize=True,title="outweights_evolving", prev_fig=None,reorder=False);
         f.savefig(savefolder+'/outweights_evolution_'+str(i)+'.png')
         plt.close()
         
