@@ -45,7 +45,7 @@ Inpus:
     This is recommended for dictionary plotting.
   title: string for title of figure
 """
-def display_data_tiled(data, normalize=False, title="", prev_fig=None):
+def display_data_tiled(data, acts, normalize=False, title="", prev_fig=None):
        
     #calculate mean of each picture of weights
     mean_list =[]
@@ -85,9 +85,9 @@ def display_data_tiled(data, normalize=False, title="", prev_fig=None):
         right="off")  
     
     bar_chart = fig.add_subplot(2,1,2)
-    bar_chart.bar(range(0, len(mean_list)), mean_list, edgecolor = 'black', color = 'black')
+    bar_chart.bar(range(0, len(acts)), acts, edgecolor = 'black', color = 'black')
 
-    #fig.subtitle(title, y=1.05)
+    #bar_chart.title()
     fig.canvas.draw()
     #plt.show()
     
@@ -181,7 +181,7 @@ def save_plots(aec,
                                                   aec.params['imxlen'],
                                                   aec.params['imylen'],
                                                   aec.params['nneurons'])),3,1)
-    (f,sa,ai) = display_data_tiled(inweights_evolution_r[-1], normalize=True, title="final_in_weights", prev_fig=None,reorder=True);
+    (f,sa,ai) = display_data_tiled(inweights_evolution_r[-1], activations[-1], normalize=True, title="final_in_weights", prev_fig=None,reorder=True);
     f.savefig(savefolder+'inweights_final.png')
     plt.close()    
     
@@ -191,17 +191,17 @@ def save_plots(aec,
                                           aec.params['imxlen'],
                                           aec.params['imylen'])) #no rollaxis needed b/c shape is already nnuerons in pos 1.
     
-    (f,sa,ai) = display_data_tiled(outweights_evolution_r[-1], normalize=True, title="final_out_weights", prev_fig=None,reorder=True);
+    (f,sa,ai) = display_data_tiled(outweights_evolution_r[-1], activations[-1], normalize=True, title="final_out_weights", prev_fig=None,reorder=True);
     f.savefig(savefolder+'outweights_final.png')
     plt.close()
 
     #save evolving weights
     for i in range(len(inweights_evolution_r)):
-        (f,sa,ai) = display_data_tiled(inweights_evolution_r[i], normalize=True,title="inweights_evolving", prev_fig=None,reorder=False);
+        (f,sa,ai) = display_data_tiled(inweights_evolution_r[i], activations[-1], normalize=True,title="inweights_evolving", prev_fig=None,reorder=False);
         f.savefig(savefolder+'/inweights_evolution_'+str(i)+'.png')
         plt.close()
         
-        (f,sa,ai) = display_data_tiled(outweights_evolution_r[i], normalize=True,title="outweights_evolving", prev_fig=None,reorder=False);
+        (f,sa,ai) = display_data_tiled(outweights_evolution_r[i], activations[-1], normalize=True,title="outweights_evolving", prev_fig=None,reorder=False);
         f.savefig(savefolder+'/outweights_evolution_'+str(i)+'.png')
         plt.close()
         
