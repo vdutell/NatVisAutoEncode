@@ -181,7 +181,7 @@ def save_plots(aec,
                                                   aec.params['imxlen'],
                                                   aec.params['imylen'],
                                                   aec.params['nneurons'])),3,1)
-    (f,sa,ai) = display_data_tiled(inweights_evolution_r[-1], activations[-1], normalize=True, title="final_in_weights", prev_fig=None,reorder=True);
+    (f,sa,ai) = display_data_tiled(final_inweights_ordered, activations[-1], normalize=True, title="final_in_weights", prev_fig=None);
     f.savefig(savefolder+'inweights_final.png')
     plt.close()    
     
@@ -191,17 +191,17 @@ def save_plots(aec,
                                           aec.params['imxlen'],
                                           aec.params['imylen'])) #no rollaxis needed b/c shape is already nnuerons in pos 1.
     
-    (f,sa,ai) = display_data_tiled(outweights_evolution_r[-1], activations[-1], normalize=True, title="final_out_weights", prev_fig=None,reorder=True);
+    (f,sa,ai) = display_data_tiled(final_outweights_ordered, activations[-1], normalize=True, title="final_out_weights", prev_fig=None);
     f.savefig(savefolder+'outweights_final.png')
     plt.close()
 
     #save evolving weights
     for i in range(len(inweights_evolution_r)):
-        (f,sa,ai) = display_data_tiled(inweights_evolution_r[i], activations[-1], normalize=True,title="inweights_evolving", prev_fig=None,reorder=False);
+        (f,sa,ai) = display_data_tiled(inweights_evolution_r[i], activations[-1], normalize=True,title="inweights_evolving", prev_fig=None);
         f.savefig(savefolder+'/inweights_evolution_'+str(i)+'.png')
         plt.close()
         
-        (f,sa,ai) = display_data_tiled(outweights_evolution_r[i], activations[-1], normalize=True,title="outweights_evolving", prev_fig=None,reorder=False);
+        (f,sa,ai) = display_data_tiled(outweights_evolution_r[i], activations[-1], normalize=True,title="outweights_evolving", prev_fig=None);
         f.savefig(savefolder+'/outweights_evolution_'+str(i)+'.png')
         plt.close()
         
