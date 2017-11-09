@@ -47,7 +47,7 @@ class imageFile:
 
             dim = [1024,1536]
             full_img_data = []
-            for file in glob.glob(imdir,recursive=True)[:500]:
+            for file in glob.glob(imdir,recursive=True)[:100]:
                 dtype = np.dtype ('uint16').newbyteorder('>')
                 a = np.fromfile(file, dtype).reshape((dim))
                 full_img_data.append(np.array(a))
@@ -62,7 +62,7 @@ class imageFile:
             imdir = iml_dir #using fully raw images
             dim = [1024,1536]
             ims = []
-            for file in glob.glob(imdir,recursive=True):
+            for file in glob.glob(imdir,recursive=True)[:100]:
                 dtype = np.dtype ('uint16').newbyteorder('>')
                 a = np.fromfile(file, dtype).reshape((dim))
                 ims.append(np.array(a))
