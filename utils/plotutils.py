@@ -163,53 +163,63 @@ def measure_plot_dist(weight_mat,norm,plot=True):
 def save_plots(aec,
                activations,
                cost_evolution,
-                wmean_evolution,
-                inweights_evolution,
-                outweights_evolution,
-                images,
-                recons,
-                final_inweights_ordered,
-                final_outweights_ordered,
-                inbias_evolution,
-                activation_evolution):
+               wmean_evolution,
+               inweights_evolution,
+               outweights_evolution,
+               images,
+               recons,
+               final_inweights_ordered,
+               final_outweights_ordered,
+               inbias_evolution,
+               activation_evolution):
     
     savefolder = aec.params['savefolder']
 
     #Save our final weights
-    inweights_evolution_r = np.rollaxis(np.reshape(inweights_evolution,
-                                                 (len(inweights_evolution),
-                                                  aec.params['imxlen'],
-                                                  aec.params['imylen'],
-                                                  aec.params['nneurons'])),3,1)
-    (f,sa,ai) = display_data_tiled(final_inweights_ordered, activations[-1], normalize=True, title="final_in_weights", prev_fig=None);
-    f.savefig(savefolder+'inweights_final.png')
+    ## in weights
+    fiw = final_inweights_ordered.reshape(aec.params['imxlen'],
+                                  aec.params['imylen'],
+                                  aec.params['nneurons']).T
+    final_acts = activations[-1]
+    (f,sa,ai) = display_data_tiled(fiw, final_acts[np.argsort(-final_acts)], normalize=True, title="final_in_weights", prev_fig=None);
+    f.savefig(savefolder+'trained_weights_in.png')
     plt.close()    
     
+    ##out weights
+    fow = final_outweights_ordered.reshape(aec.params['imxlen'],
+                                  aec.params['imylen'],
+                                  aec.params['nneurons']).T
+    (f,sa,ai) = display_data_tiled(fow, final_acts[np.argsort(-final_acts)], normalize=True, title="final_out_weights", prev_fig=None);
+    
+    f.savefig(savefolder+'trained_weights_out.png')
+    plt.close()
+   
+    #save evolving weights
+    inweights_evolution_r = np.rollaxis(np.reshape(inweights_evolution,
+                                         (len(inweights_evolution),
+                                          aec.params['imxlen'],
+                                          aec.params['imylen'],
+                                          aec.params['nneurons'])),3,1)
     outweights_evolution_r = np.reshape(outweights_evolution,
                                          (len(outweights_evolution),
                                           aec.params['nneurons'],
                                           aec.params['imxlen'],
-                                          aec.params['imylen'])) #no rollaxis needed b/c shape is already nnuerons in pos 1.
-    
-    (f,sa,ai) = display_data_tiled(final_outweights_ordered, activations[-1], normalize=True, title="final_out_weights", prev_fig=None);
-    f.savefig(savefolder+'outweights_final.png')
-    plt.close()
-
-    #save evolving weights
+                                          aec.params['imylen'])) #no rollaxis needed b/c shape is already nnuerons in pos 1.    
+  
     for i in range(len(inweights_evolution_r)):
         (f,sa,ai) = display_data_tiled(inweights_evolution_r[i], activations[-1], normalize=True,title="inweights_evolving", prev_fig=None);
-        f.savefig(savefolder+'/inweights_evolution_'+str(i)+'.png')
+        f.savefig(savefolder+'param_evolution/inweights_evolution_'+str(i)+'.png')
         plt.close()
         
         (f,sa,ai) = display_data_tiled(outweights_evolution_r[i], activations[-1], normalize=True,title="outweights_evolving", prev_fig=None);
-        f.savefig(savefolder+'/outweights_evolution_'+str(i)+'.png')
+        f.savefig(savefolder+'param_evolution/outweights_evolution_'+str(i)+'.png')
         plt.close()
         
     #save plot of activations
     f8 = plt.figure(figsize=(6,6))
-    plt.plot(activations)
+    plt.plot(final_acts)
     plt.title('Activations')
-    f8.savefig(savefolder+'/activations.png') 
+    f8.savefig(savefolder+'/param_evolution/trained_activations.png') 
     plt.close()
     
     #save weights and cost evolution
@@ -218,9 +228,8 @@ def save_plots(aec,
     plt.plot(wmean_evolution)
     plt.subplot(2,1,2,title='Cost')
     plt.plot(cost_evolution)
-    #plt.plot(cost_evolution/2)
     plt.tight_layout()
-    f2.savefig(savefolder+'/cost_weights.png') 
+    f2.savefig(savefolder+'/summary_weights_cost.png') 
     plt.close()
     
     #show an example image and reconstruction from the last iteration of learning
@@ -244,12 +253,12 @@ def save_plots(aec,
     
     #save plots of on and off tiling
     f4 = plotonoff(inweights_evolution_r[-1]);
-    f4.savefig(savefolder+'/final_in_on_off_RFs.png') 
+    f4.savefig(savefolder+'/trained_in_on_off_RFs.png') 
     plt.close()
     
     #save plots of on and off tiling
     f5 = plotonoff(outweights_evolution_r[-1]);
-    f5.savefig(savefolder+'/final_out_on_off_RFs.png') 
+    f5.savefig(savefolder+'/trained_out_on_off_RFs.png') 
     plt.close()
     
     
@@ -257,12 +266,12 @@ def save_plots(aec,
     for i in range(len(activation_evolution)):
         f6 = plt.figure()
         plt.bar(range(0, len(activation_evolution[i])), activation_evolution[i], edgecolor = 'black', color = 'black')
-        f6.savefig(savefolder+'/activation_'+str(i)+'.png')
+        f6.savefig(savefolder+'param_evolution/activation_'+str(i)+'.png')
         plt.close()
     for i in range(len(inbias_evolution)):
         f9 = plt.figure()
         plt.bar(range(0, len(inbias_evolution[i])), inbias_evolution[i], edgecolor = 'black', color = 'black')
-        f9.savefig(savefolder+'/inbias_'+str(i)+'.png')
+        f9.savefig(savefolder+'param_evolution/inbias_'+str(i)+'.png')
         plt.close()
         
         
