@@ -145,7 +145,7 @@ def measure_plot_dist(weight_mat,norm,plot=True):
     ## Inputs:
     ## weight_mat: matrix of weights of shape nneurons by input shape (input shape can be 1 or 2d)
     ## norm: String describing the type of norm to take - see acceptible norms in documentation for scipy.spatial.distance.pdist
-    ## plot: Boolean indicating whether or not to plot the heatmat of the weight matrix.
+    ## plot: Boolean indicating whether or not to plot the heatmap of the weight matrix disances.
     
     ## Outputs:
     ## dist: a nneurons by nneurons matrix, with pairwise distances of the weight matrices in each element
