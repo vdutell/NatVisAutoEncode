@@ -16,7 +16,6 @@ class imageFile:
         
         # readin images
         self.images = self.extract_images(imset)
-        print(self.images.shape)
         # process images
         self.images = self.process_images(self.images, patch_edge_size, normalize_im, 
                                           patch_multiplier, normalize_patch, invert_colors)
