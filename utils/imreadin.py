@@ -8,7 +8,7 @@ class imageFile:
     def __init__(self,
                  imset,
                  patch_edge_size=None,
-                 normalize_im=False,
+                 normalize_im=True,
                  patch_multiplier = 1,
                  normalize_patch=False,
                  invert_colors=False,
@@ -46,28 +46,26 @@ class imageFile:
 
             dim = [1024,1536]
             full_img_data = []
-            for file in glob.glob(imdir,recursive=True)[:100]:
+            for file in glob.glob(imdir,recursive=True)[:300]:
                 dtype = np.dtype ('uint16').newbyteorder('>')
                 a = np.fromfile(file, dtype).reshape((dim))
                 full_img_data.append(np.array(a))
             #normalize each image to max 1
-            full_img_data = full_img_data/(np.amax(full_img_data,axis=(1,2))[:,None,None])
-            #for j, im in enumerate(full_img_data):
-            #    full_img_data[j] = im/np.amax(im,axis=(0,1))
+            #full_img_data = full_img_data/(np.amax(full_img_data,axis=(1,2))[:,None,None])
             full_img_data = np.array(full_img_data)
             
         elif(imset=='vh_ncorr'):
             iml_dir = '/home/vasha/datasets/vanHaterenNaturalImages/pirsquared/vanhateren_iml/*.iml'
             imdir = iml_dir #using fully raw images
             dim = [1024,1536]
-            ims = []
-            for file in glob.glob(imdir,recursive=True)[:100]:
+            full_img_data = []
+            for file in glob.glob(imdir,recursive=True)[:300]:
                 dtype = np.dtype ('uint16').newbyteorder('>')
                 a = np.fromfile(file, dtype).reshape((dim))
-                ims.append(np.array(a))
+                full_img_data.append(np.array(a))
             #normalize each image to max 1
-            ims = ims/(np.amax(ims,axis=(1,2))[:,None,None])
-            full_img_data = np.array(ims)
+            #ims = ims/(np.amax(ims,axis=(1,2))[:,None,None])
+            full_img_data = np.array(full_img_data)
             
         else:
             print('%s is an unsupported Image Type!!!'.format(imset))
@@ -125,28 +123,28 @@ class imageFile:
             return data
         
         
-#Load in images 
-def loadimages(imset, psz, pm, norm=True):
+#check for patchsize
+def load_images(imset,
+                patch_edge_size,
+                normalize_im,
+                patch_multiplier,
+                normalize_patch = False,
+                invert_colors = False):
+
     print("Loading Natural Image Database...")
     vhimgs = imageFile(
-        imset = imset,
-        normalize_im = norm,
-        patch_multiplier = pm,
-        normalize_patch = False,
-        invert_colors = False,
-        patch_edge_size=psz
-        )
+            imset = imset,
+            patch_edge_size = patch_edge_size,
+            normalize_im = normalize_im,
+            patch_multiplier = patch_multiplier,
+            normalize_patch = False,
+            invert_colors = False)
     print("Done Loading!")    
     np.random.shuffle(vhimgs.images)
     print("Done Shuffling!")
-    return(vhimgs.images, psz)
-
-#check for patchsize
-def check_n_load_ims(imset, psz, pm):
-    vhimgs, loadedpatchsize = loadimages(imset, psz, pm)
-
-    print("Images Ready.")
-
+    
+    vhimgs = vhimgs.images
+    
     #params of images
     imxlen = len(vhimgs[0,0,:])
     imylen = len(vhimgs[0,:,0])
