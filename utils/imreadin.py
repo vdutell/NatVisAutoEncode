@@ -28,11 +28,11 @@ class imageFile:
         if(imset=='vhlognorm'):
             self.image_files = '/home/vasha/datasets/vanHaterenNaturalImages/VanHaterenNaturalImagesCurated.h5'
             with h5py.File(self.image_files, "r") as f:
-                full_img_data = np.array(f['van_hateren_good'], dtype=np.float32) 
+                full_img_data = np.array(f['van_hateren_good'], dtype=np.float32)[:,subset]: 
         elif(imset=='kyoto'):
             self.image_files = '/home/vasha/datasets/eizaburo-doi-kyoto_natim-c2015ff/*.mat'
             bw_ims = []
-            for file in glob.glob(self.image_files,recursive=True):
+            for file in sorted(glob.glob(self.image_files,recursive=True))[:subset]:
                 mat = io.loadmat(file)
                 #short medium and long activations
                 sml_acts = np.array([mat['OS'],mat['OM'],mat['OL']])
@@ -52,7 +52,7 @@ class imageFile:
                 imdir = '/home/vasha/datasets/vanHaterenNaturalImages/pirsquared/vanhateren_iml/*.iml'
             dim = [1024,1536]
             full_img_data = []
-            for file in sorted(glob.glob(imdir,recursive=True)[:subset]):
+            for file in sorted(glob.glob(imdir,recursive=True))[:subset]:
                 dtype = np.dtype ('uint16').newbyteorder('>')
                 a = np.fromfile(file, dtype).reshape(dim)
                 full_img_data.append(np.array(a))
