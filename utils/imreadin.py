@@ -3,6 +3,7 @@ import numpy as np
 import h5py
 import glob
 from scipy import io
+from scipy import stats
 
 class imageFile:
     def __init__(self,
@@ -12,17 +13,19 @@ class imageFile:
                  patch_multiplier = 1,
                  normalize_patch=False,
                  invert_colors=False,
+                 subset=500,
                  rand_state=np.random.RandomState()):
         
         # readin images
-        self.images = self.extract_images(imset)
+        self.images = self.extract_images(imset = imset,
+                                          subset = subset)
         # process images
         self.images = self.process_images(self.images, patch_edge_size, normalize_im, 
                                           patch_multiplier, normalize_patch, invert_colors)
 
-    def extract_images(self, imset):
+    def extract_images(self, imset, subset):
         #load in our images
-        if(imset=='vh_lognorm'):
+        if(imset=='vhlognorm'):
             self.image_files = '/home/vasha/datasets/vanHaterenNaturalImages/VanHaterenNaturalImagesCurated.h5'
             with h5py.File(self.image_files, "r") as f:
                 full_img_data = np.array(f['van_hateren_good'], dtype=np.float32) 
@@ -40,33 +43,26 @@ class imageFile:
                     bw_acts = bw_acts.T
                 bw_ims.append(np.array(bw_acts))
             full_img_data = np.array(bw_ims)
-        elif(imset=='vh_corr'):
-            imc_dir = '/home/vasha/datasets/vanHaterenNaturalImages/pirsquared/vanhateren_imc/*.imc'
-            imdir = imc_dir #using optics corrected images
+        elif('vh_' in imset):
+            #using abberation corrected images
+            if(imset=='vh_corr'):
+                imdir = '/home/vasha/datasets/vanHaterenNaturalImages/pirsquared/vanhateren_imc/*.imc'
+            #using abberation uncorrected images
+            elif(imset=='vh_uncorr'):
+                imdir = '/home/vasha/datasets/vanHaterenNaturalImages/pirsquared/vanhateren_iml/*.iml'
+            dim = [1024,1536]
+            full_img_data = []
+            for file in sorted(glob.glob(imdir,recursive=True)[:subset]):
+                dtype = np.dtype ('uint16').newbyteorder('>')
+                a = np.fromfile(file, dtype).reshape(dim)
+                full_img_data.append(np.array(a))
+            full_img_data = np.array(full_img_data)
 
-            dim = [1024,1536]
-            full_img_data = []
-            for file in glob.glob(imdir,recursive=True)[:300]:
-                dtype = np.dtype ('uint16').newbyteorder('>')
-                a = np.fromfile(file, dtype).reshape((dim))
-                full_img_data.append(np.array(a))
-            #normalize each image to max 1
-            #full_img_data = full_img_data/(np.amax(full_img_data,axis=(1,2))[:,None,None])
-            full_img_data = np.array(full_img_data)
-            
-        elif(imset=='vh_ncorr'):
-            iml_dir = '/home/vasha/datasets/vanHaterenNaturalImages/pirsquared/vanhateren_iml/*.iml'
-            imdir = iml_dir #using fully raw images
-            dim = [1024,1536]
-            full_img_data = []
-            for file in glob.glob(imdir,recursive=True)[:300]:
-                dtype = np.dtype ('uint16').newbyteorder('>')
-                a = np.fromfile(file, dtype).reshape((dim))
-                full_img_data.append(np.array(a))
-            #normalize each image to max 1
-            #ims = ims/(np.amax(ims,axis=(1,2))[:,None,None])
-            full_img_data = np.array(full_img_data)
-            
+            #normalize each full image - divide by geom norm and log transform 
+            invn = 1/np.prod([full_img_data.shape[1],full_img_data.shape[2]])
+            geom_means = stats.mstats.gmean(full_img_data+1,axis=(1,2))[:,np.newaxis,np.newaxis]
+            full_img_data = np.log(full_img_data+1) - np.log(geom_means)
+
         else:
             print('%s is an unsupported Image Type!!!'.format(imset))
         return(full_img_data)
@@ -126,10 +122,11 @@ class imageFile:
 #check for patchsize
 def load_images(imset,
                 patch_edge_size,
-                normalize_im,
-                patch_multiplier,
+                normalize_im = False,
+                patch_multiplier = 1,
                 normalize_patch = False,
-                invert_colors = False):
+                invert_colors = False,
+                subset = 500):
 
     print("Loading Natural Image Database...")
     vhimgs = imageFile(
@@ -138,7 +135,8 @@ def load_images(imset,
             normalize_im = normalize_im,
             patch_multiplier = patch_multiplier,
             normalize_patch = False,
-            invert_colors = False)
+            invert_colors = False,
+            subset = subset)
     print("Done Loading!")    
     np.random.shuffle(vhimgs.images)
     print("Done Shuffling!")
