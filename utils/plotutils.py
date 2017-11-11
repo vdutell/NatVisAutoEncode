@@ -252,12 +252,10 @@ def save_plots(aec,
         plt.imshow(images[-1][patchnum+i],cmap='gray',interpolation='none')
         plt.colorbar()
         plt.axis('off')
-
         plt.subplot(plots,2,2*i+2)#,title='Recon')
         plt.imshow(recons[-1][patchnum+i],cmap='gray',interpolation='none')
         plt.colorbar()
         plt.axis('off')
-
     plt.tight_layout()
     f3.savefig(savefolder+'/reconstruction.png') 
     plt.close() 
@@ -288,6 +286,8 @@ def save_plots(aec,
         plt.bar(range(0, len(activation_evolution[i])), activation_evolution[i], edgecolor = 'black', color = 'black')
         f8.savefig(savefolder+'param_evolution/activation_'+str(i)+'.png')
         plt.close()
+        
+    #save plots of inbiases
     for i in range(len(inbias_evolution)):
         f9 = plt.figure()
         plt.bar(range(0, len(inbias_evolution[i])), inbias_evolution[i], edgecolor = 'black', color = 'black')
