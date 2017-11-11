@@ -28,7 +28,7 @@ class imageFile:
         if(imset=='vhlognorm'):
             self.image_files = '/home/vasha/datasets/vanHaterenNaturalImages/VanHaterenNaturalImagesCurated.h5'
             with h5py.File(self.image_files, "r") as f:
-                full_img_data = np.array(f['van_hateren_good'], dtype=np.float32)[:,subset]: 
+                full_img_data = np.array(f['van_hateren_good'], dtype=np.float32)[:,subset]
         elif(imset=='kyoto'):
             self.image_files = '/home/vasha/datasets/eizaburo-doi-kyoto_natim-c2015ff/*.mat'
             bw_ims = []
