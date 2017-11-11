@@ -140,7 +140,7 @@ def plotonoff(allws):
     
     return(fig)
 
-def measure_plot_dist(weight_mat,norm,plot=True):
+def measure_plot_dist(weight_mat,norm):
     ## measures pairwise norm of hidden node weights.
     ## Inputs:
     ## weight_mat: matrix of weights of shape nneurons by input shape (input shape can be 1 or 2d)
@@ -154,10 +154,21 @@ def measure_plot_dist(weight_mat,norm,plot=True):
     fwv = weight_mat.reshape(weight_mat.shape[0],-1)
     dist = scpd.pdist(fwv,norm) #'euclidean','hamming'
     dist = scpd.squareform(dist)
-    if(plot==True):
-        plt.imshow(dist)
-        plt.colorbar()
-    return(dist)
+    
+    fig = plt.figure(figsize=(6,6))
+    plt.imshow(dist)
+    plt.colorbar()
+
+    return(dist, fig)
+
+
+def measure_plot_act_corrs(activations):
+    ccf = np.corrcoef(np.array(activations).T)
+    fig = plt.figure(figsize = (6,6))
+    plt.imshow(ccf)
+    plt.colorbar()
+    
+    return(ccf,fig)
 
 
 def save_plots(aec,
@@ -216,10 +227,10 @@ def save_plots(aec,
         plt.close()
         
     #save plot of activations
-    f8 = plt.figure(figsize=(6,6))
+    f1 = plt.figure(figsize=(6,6))
     plt.plot(final_acts)
     plt.title('Activations')
-    f8.savefig(savefolder+'/param_evolution/trained_activations.png') 
+    f1.savefig(savefolder+'/param_evolution/trained_activations.png') 
     plt.close()
     
     #save weights and cost evolution
@@ -262,16 +273,20 @@ def save_plots(aec,
     plt.close()
     
     #save distance plots
-    f6 = measure_plot_dist(fiw,norm='euclidean',plot=True);
+    dists, f6 = measure_plot_dist(fiw, norm='euclidean');
     f6.savefig(savefolder+'/trained_distances.png') 
     plt.close()
     
+    #save activation correlation plots
+    corrs, f7 =  measure_plot_act_corrs(activations);
+    f7.savefig(savefolder+'/trained_act_corrs.png') 
+    plt.close()
     
     #save plots of activation
     for i in range(len(activation_evolution)):
-        f7 = plt.figure()
+        f8 = plt.figure()
         plt.bar(range(0, len(activation_evolution[i])), activation_evolution[i], edgecolor = 'black', color = 'black')
-        f7.savefig(savefolder+'param_evolution/activation_'+str(i)+'.png')
+        f8.savefig(savefolder+'param_evolution/activation_'+str(i)+'.png')
         plt.close()
     for i in range(len(inbias_evolution)):
         f9 = plt.figure()
