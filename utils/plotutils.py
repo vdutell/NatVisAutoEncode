@@ -261,12 +261,17 @@ def save_plots(aec,
     f5.savefig(savefolder+'/trained_out_on_off_RFs.png') 
     plt.close()
     
+    #save distance plots
+    f6 = measure_plot_dist(fiw,norm='euclidean',plot=True);
+    f6.savefig(savefolder+'/trained_distances.png') 
+    plt.close()
+    
     
     #save plots of activation
     for i in range(len(activation_evolution)):
-        f6 = plt.figure()
+        f7 = plt.figure()
         plt.bar(range(0, len(activation_evolution[i])), activation_evolution[i], edgecolor = 'black', color = 'black')
-        f6.savefig(savefolder+'param_evolution/activation_'+str(i)+'.png')
+        f7.savefig(savefolder+'param_evolution/activation_'+str(i)+'.png')
         plt.close()
     for i in range(len(inbias_evolution)):
         f9 = plt.figure()
