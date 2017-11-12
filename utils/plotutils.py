@@ -1,7 +1,9 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib
-    
+
+from matplotlib.ticker import NullFormatter
+from sklearn import manifold
 import scipy.spatial.distance as scpd
     
 """
@@ -140,18 +142,24 @@ def plotonoff(allws):
     
     return(fig)
 
-def measure_plot_dist(weight_mat,norm):
+def measure_plot_dist(weight_mat, norm, normalize=True):
     ## measures pairwise norm of hidden node weights.
     ## Inputs:
     ## weight_mat: matrix of weights of shape nneurons by input shape (input shape can be 1 or 2d)
     ## norm: String describing the type of norm to take - see acceptible norms in documentation for scipy.spatial.distance.pdist
-    ## plot: Boolean indicating whether or not to plot the heatmap of the weight matrix disances.
+    ## normalize: boolean whether to normalize weight vectors to unit norm
     
     ## Outputs:
     ## dist: a nneurons by nneurons matrix, with pairwise distances of the weight matrices in each element
-    ## optional plot of the distance matrix as a heatmap
+    ## fig: plot of the distance matrix as a heatmap
 
+    #vectorize
     fwv = weight_mat.reshape(weight_mat.shape[0],-1)
+    
+    #make each weigth vector unit norm
+    if(normalize):
+        fwv = fwv / np.linalg.norm(fwv,axis=0)
+        
     dist = scpd.pdist(fwv,norm) #'euclidean','hamming'
     dist = scpd.squareform(dist)
     
@@ -169,6 +177,50 @@ def measure_plot_act_corrs(activations):
     plt.colorbar()
     
     return(ccf,fig)
+
+
+def plot_dist_embeddings(distmat, n_neighbors = 10, n_components = 2):
+    
+    fig = plt.figure(figsize = (6,6))
+
+    #isomap
+    iso = manifold.Isomap(n_neighbors, n_components).fit_transform(distmat)
+    ax = fig.add_subplot(2, 2, 1)
+    plt.scatter(iso[:, 0], iso[:, 1])
+    plt.title('Isomap - {} Neighbors'.format(n_neighbors))
+    ax.xaxis.set_major_formatter(NullFormatter())
+    ax.yaxis.set_major_formatter(NullFormatter())
+    plt.axis('tight')
+
+    #LLE
+    lle = manifold.LocallyLinearEmbedding(n_neighbors, n_components, eigen_solver='auto', method='standard').fit_transform(distmat)
+    ax = fig.add_subplot(2, 2, 2)
+    plt.scatter(lle[:, 0], lle[:, 1])
+    plt.title('LLE - {} Neighbors'.format(n_neighbors))
+    ax.xaxis.set_major_formatter(NullFormatter())
+    ax.yaxis.set_major_formatter(NullFormatter())
+    plt.axis('tight')
+
+    #TSNE
+    tsne = manifold.TSNE(n_components, init='pca', random_state=0).fit_transform(distmat)
+    ax = fig.add_subplot(2, 2, 3)
+    plt.scatter(tsne[:, 0], tsne[:, 1])
+    plt.title('t-SNE - {} Components'.format(n_components))
+    ax.xaxis.set_major_formatter(NullFormatter())
+    ax.yaxis.set_major_formatter(NullFormatter())
+    plt.axis('tight')
+
+    #MDS
+    max_iter = 100
+    mds = manifold.MDS(n_components, max_iter=max_iter, n_init=1).fit_transform(distmat)
+    ax = fig.add_subplot(2, 2, 4)
+    plt.scatter(mds[:, 0], mds[:, 1])
+    plt.title('MDS - {} Components'.format(n_components))
+    ax.xaxis.set_major_formatter(NullFormatter())
+    ax.yaxis.set_major_formatter(NullFormatter())
+    plt.axis('tight')
+
+    return(fig)
 
 
 def save_plots(aec,
