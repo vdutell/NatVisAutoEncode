@@ -106,6 +106,13 @@ Args:
 """
 def plotonoff(allws):
 
+    #Rescale data    
+    mean_data = np.mean(allws)
+    min_data = np.amin(allws)
+    max_data = np.amax(allws)
+    data = (((allws-min_data)/(max_data-min_data))*2)-1
+    #data = normalize_data(data)
+    
     #extract on center
     onws = np.mean(allws,axis=0)>0
     onws = allws[:,onws]
@@ -115,13 +122,23 @@ def plotonoff(allws):
     #keep track of the circles
     oncircs = []
     offcircs = []
+    ambiguous = []
+    labels = []
 
+    circthresh = 0.6
+    onoffthresh = 0
+    
     for ws in allws:
-        circ = (ws>(0.3*np.sign(np.mean(ws))))
-        if(np.mean(ws)>0):
+        if(np.mean(ws)>onoffthresh):
+            circ = (ws>(circthresh*np.sign(np.mean(ws))))
             oncircs.append(circ)
+            labels.append(1)
+        elif(np.mean(ws)<-onoffthresh):
+            circ = (ws<(circthresh*np.sign(np.mean(ws))))
+            offcircs.append(circ)
+            labels.append(-1)
         else:
-            offcircs.append(False==circ)
+            labels.append(0)
 
     #plot
     fig = plt.figure(figsize=(6,3.5))
@@ -140,7 +157,7 @@ def plotonoff(allws):
     plt.yticks([])
     plt.tight_layout()
     
-    return(fig)
+    return(labels, fig)
 
 def measure_plot_dist(weight_mat, norm, normalize=True):
     ## measures pairwise norm of hidden node weights.
@@ -179,24 +196,24 @@ def measure_plot_act_corrs(activations):
     return(ccf,fig)
 
 
-def plot_dist_embeddings(distmat, n_neighbors = 10, n_components = 2):
-    
+def plot_dist_embeddings(distmat, onofflabels, n_neighbors = 10, n_components = 2):
+     
     fig = plt.figure(figsize = (6,6))
 
     #isomap
     iso = manifold.Isomap(n_neighbors, n_components).fit_transform(distmat)
     ax = fig.add_subplot(2, 2, 1)
-    plt.scatter(iso[:, 0], iso[:, 1])
+    plt.scatter(iso[:, 0], iso[:, 1], c=onofflabels)
     plt.title('Isomap - {} Neighbors'.format(n_neighbors))
     ax.xaxis.set_major_formatter(NullFormatter())
     ax.yaxis.set_major_formatter(NullFormatter())
     plt.axis('tight')
 
-    #LLE
-    lle = manifold.LocallyLinearEmbedding(n_neighbors, n_components, eigen_solver='auto', method='standard').fit_transform(distmat)
+    #Spectral
+    spec = manifold.SpectralEmbedding(n_components=n_components, n_neighbors = n_neighbors).fit_transform(distmat)
     ax = fig.add_subplot(2, 2, 2)
-    plt.scatter(lle[:, 0], lle[:, 1])
-    plt.title('LLE - {} Neighbors'.format(n_neighbors))
+    plt.scatter(spec[:, 0], spec[:, 1], c=onofflabels)
+    plt.title('Spectral - {} Neighbors'.format(n_neighbors))
     ax.xaxis.set_major_formatter(NullFormatter())
     ax.yaxis.set_major_formatter(NullFormatter())
     plt.axis('tight')
@@ -204,7 +221,7 @@ def plot_dist_embeddings(distmat, n_neighbors = 10, n_components = 2):
     #TSNE
     tsne = manifold.TSNE(n_components, init='pca', random_state=0).fit_transform(distmat)
     ax = fig.add_subplot(2, 2, 3)
-    plt.scatter(tsne[:, 0], tsne[:, 1])
+    plt.scatter(tsne[:, 0], tsne[:, 1], c=onofflabels)
     plt.title('t-SNE - {} Components'.format(n_components))
     ax.xaxis.set_major_formatter(NullFormatter())
     ax.yaxis.set_major_formatter(NullFormatter())
@@ -212,9 +229,9 @@ def plot_dist_embeddings(distmat, n_neighbors = 10, n_components = 2):
 
     #MDS
     max_iter = 100
-    mds = manifold.MDS(n_components, max_iter=max_iter, n_init=1).fit_transform(distmat)
+    mds = manifold.MDS(n_components=n_components, max_iter=max_iter, n_init=1).fit_transform(distmat)
     ax = fig.add_subplot(2, 2, 4)
-    plt.scatter(mds[:, 0], mds[:, 1])
+    plt.scatter(mds[:, 0], mds[:, 1], c=onofflabels)
     plt.title('MDS - {} Components'.format(n_components))
     ax.xaxis.set_major_formatter(NullFormatter())
     ax.yaxis.set_major_formatter(NullFormatter())
@@ -313,17 +330,12 @@ def save_plots(aec,
     plt.close() 
     
     #save plots of on and off tiling
-    f4 = plotonoff(inweights_evolution_r[-1]);
+    labels, f4 = plotonoff(fiw);
     f4.savefig(savefolder+'/trained_in_on_off_RFs.png') 
     plt.close()
     
-    #save plots of on and off tiling
-    f5 = plotonoff(outweights_evolution_r[-1]);
-    f5.savefig(savefolder+'/trained_out_on_off_RFs.png') 
-    plt.close()
-    
     #save distance plots
-    dists, f6 = measure_plot_dist(fiw, norm='euclidean');
+    dists, f6 = measure_plot_dist(fiw, labels, norm='euclidean');
     f6.savefig(savefolder+'/trained_distances.png') 
     plt.close()
     
