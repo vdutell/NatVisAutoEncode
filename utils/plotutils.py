@@ -330,13 +330,18 @@ def save_plots(aec,
     plt.close() 
     
     #save plots of on and off tiling
-    labels, f4 = plotonoff(fiw);
+    onofflabels, f4 = plotonoff(fiw);
     f4.savefig(savefolder+'/trained_in_on_off_RFs.png') 
     plt.close()
     
     #save distance plots
-    dists, f6 = measure_plot_dist(fiw, norm='euclidean');
-    f6.savefig(savefolder+'/trained_distances.png') 
+    dists, f5 = measure_plot_dist(fiw, norm='euclidean');
+    f5.savefig(savefolder+'/trained_distances.png') 
+    plt.close()
+        
+    #save plots of clustering
+    f6 = plu.plot_dist_embeddings(dists, onofflabels, n_neighbors=5)
+    f6.savefig(savefolder+'/trained_manifold_embeddings_RFs.png') 
     plt.close()
     
     #save activation correlation plots
