@@ -125,7 +125,7 @@ def plotonoff(allws):
     ambiguous = []
     labels = []
 
-    circthresh = 0.6
+    circthresh = 0.5
     onoffthresh = 0
     
     for ws in allws:
