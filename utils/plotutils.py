@@ -299,7 +299,7 @@ def save_plots(aec,
     f1 = plt.figure(figsize=(6,6))
     plt.plot(final_acts)
     plt.title('Activations')
-    f1.savefig(savefolder+'/param_evolution/trained_activations.png') 
+    f1.savefig(savefolder+'/trained_activations.png') 
     plt.close()
     
     #save weights and cost evolution
@@ -335,7 +335,7 @@ def save_plots(aec,
     plt.close()
     
     #save distance plots
-    dists, f6 = measure_plot_dist(fiw, labels, norm='euclidean');
+    dists, f6 = measure_plot_dist(fiw, norm='euclidean');
     f6.savefig(savefolder+'/trained_distances.png') 
     plt.close()
     
