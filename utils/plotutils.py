@@ -228,8 +228,8 @@ def plot_dist_embeddings(distmat, onofflabels, n_neighbors = 10, n_components = 
     plt.axis('tight')
 
     #MDS
-    max_iter = 100
-    mds = manifold.MDS(n_components=n_components, max_iter=max_iter, n_init=1).fit_transform(distmat)
+    max_iter = 10
+    mds = manifold.MDS(n_components=n_components, metric=True, max_iter=max_iter, dissimilarity="precomputed").fit_transform(distmat)
     ax = fig.add_subplot(2, 2, 4)
     plt.scatter(mds[:, 0], mds[:, 1], c=onofflabels)
     plt.title('MDS - {} Components'.format(n_components))
