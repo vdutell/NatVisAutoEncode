@@ -9,7 +9,7 @@ class imageFile:
     def __init__(self,
                  imset,
                  patch_edge_size=None,
-                 normalize_im=True,
+                 normalize_im=False,
                  patch_multiplier = 1,
                  normalize_patch=False,
                  invert_colors=False,
@@ -24,13 +24,14 @@ class imageFile:
                                           patch_multiplier, normalize_patch, invert_colors)
 
     def extract_images(self, imset, subset):
-        if(imset = 'noise'):
-        full_img_data = []
+        if(imset=='whitenoise'):
+            full_img_data = np.random.rand(200,100,100)
         #load in our images
-        if(imset=='vhlognorm'):
+        elif(imset=='vhlognorm'):
             self.image_files = '/home/vasha/datasets/vanHaterenNaturalImages/VanHaterenNaturalImagesCurated.h5'
             with h5py.File(self.image_files, "r") as f:
-                full_img_data = np.array(f['van_hateren_good'], dtype=np.float32)[:,subset]
+                full_img_data = np.array(f['van_hateren_good'], dtype=np.float32)
+            full_img_data = full_img_data[0:subset,:,:]
         elif(imset=='kyoto'):
             self.image_files = '/home/vasha/datasets/eizaburo-doi-kyoto_natim-c2015ff/*.mat'
             bw_ims = []
@@ -66,7 +67,9 @@ class imageFile:
             full_img_data = np.log(full_img_data+1) - np.log(geom_means)
 
         else:
-            print('%s is an unsupported Image Type!!!'.format(imset))
+            print('\"{}\" is an Unsupported Image Type!!!'.format(imset))
+            
+
         return(full_img_data)
 
     def patch_maker(self, full_img_data, patch_edge_size, offset):
@@ -79,46 +82,47 @@ class imageFile:
         #crop to patch cols
         if(num_px_cols % patch_edge_size != 0):
             nump = int(num_px_cols/patch_edge_size)
-            full_img_data = full_img_data[:nump*patch_edge_size,:,:]
+            full_img_data = full_img_data[:,:,:nump*patch_edge_size]
         (num_img, num_px_rows, num_px_cols) = full_img_data.shape
         num_img_px = num_px_rows * num_px_cols
-        #calc number of patches & calculate them
+        #calc number of patches & calculate them        
         self.num_patches = int(num_img_px / patch_edge_size**2)  
-        data = np.asarray(np.split(full_img_data, num_px_cols/patch_edge_size,2)) # tile column-wise
-        data = np.asarray(np.split(data, num_px_rows/patch_edge_size,2)) #tile row-wise
+        
+        data = np.asarray(np.split(full_img_data, int(num_px_cols/patch_edge_size),2)) # tile column-wise
+        data = np.asarray(np.split(data, int(num_px_rows/patch_edge_size),2)) #tile row-wise
         data = np.transpose(np.reshape(np.transpose(data,(3,4,0,1,2)),(patch_edge_size,patch_edge_size,-1)),(2,0,1)) #stack tiles together
         return(data)
             
     def process_images(self, full_img_data, patch_edge_size=None, 
                        normalize_im=False, patch_multiplier = 1,
-                       normalize_patch=False, invert_colors=False):  
-            if(normalize_im):
-                print('normalizing full images...')
-                full_img_data = full_img_data - np.mean(full_img_data,axis=(1,2),keepdims=True)
-                full_img_data = full_img_data/np.std(full_img_data,axis=(1,2),keepdims=True)
-            if(invert_colors):
-                print('inverting colors...')
-                full_img_data = full_img_data*(-1)
-            if patch_edge_size is not None:
-                print('sectioning into patches....')
-                data = []
-                if(patch_multiplier>1):
-                    print('multipying patches by {}...'.format(patch_multiplier))
-                for i in range(patch_multiplier):
-                    offset_px = patch_edge_size/patch_multiplier # size in pixels of each offset
-                    data.append(np.array(self.patch_maker(full_img_data, patch_edge_size,offset=offset_px*i)))
-                data = np.array(data)
-                data = np.reshape(data,(-1,np.shape(data)[2],np.shape(data)[3]))
-                print('now we have {} patches'.format(np.shape(data)[0]))
-                self.num_patches = np.shape(data)[0]
-            else:
-                data = full_img_data
-                self.num_patches = 1
-            if(normalize_patch):
-                print('normalizing patches...')
-                data = data - np.mean(data,axis=(1,2),keepdims=True)
-                data = data/np.std(data,axis=(1,2),keepdims=True)
-            return data
+                       normalize_patch=False, invert_colors=False):
+        if(normalize_im):
+            print('normalizing full images...')
+            full_img_data = full_img_data - np.mean(full_img_data,axis=(1,2),keepdims=True)
+            full_img_data = full_img_data/np.std(full_img_data,axis=(1,2),keepdims=True)
+        if(invert_colors):
+            print('inverting colors...')
+            full_img_data = full_img_data*(-1)
+        if patch_edge_size is not None:
+            print('sectioning into patches....')
+            data = []
+            if(patch_multiplier>1):
+                print('multipying patches by {}...'.format(patch_multiplier))
+            for i in range(patch_multiplier):
+                offset_px = patch_edge_size/patch_multiplier # size in pixels of each offset
+                data.append(np.array(self.patch_maker(full_img_data, patch_edge_size,offset=offset_px*i)))
+            data = np.array(data)
+            data = np.reshape(data,(-1,np.shape(data)[2],np.shape(data)[3]))
+            print('now we have {} patches'.format(np.shape(data)[0]))
+            self.num_patches = np.shape(data)[0]
+        else:
+            data = full_img_data
+            self.num_patches = 1
+        if(normalize_patch):
+            print('normalizing patches...')
+            data = data - np.mean(data,axis=(1,2),keepdims=True)
+            data = data/np.std(data,axis=(1,2),keepdims=True)
+        return data
         
         
 #check for patchsize
