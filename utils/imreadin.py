@@ -24,6 +24,8 @@ class imageFile:
                                           patch_multiplier, normalize_patch, invert_colors)
 
     def extract_images(self, imset, subset):
+        if(imset = 'noise'):
+        full_img_data = []
         #load in our images
         if(imset=='vhlognorm'):
             self.image_files = '/home/vasha/datasets/vanHaterenNaturalImages/VanHaterenNaturalImagesCurated.h5'
