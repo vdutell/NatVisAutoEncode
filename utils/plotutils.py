@@ -340,7 +340,7 @@ def save_plots(aec,
     plt.close()
         
     #save plots of clustering
-    f6 = plu.plot_dist_embeddings(dists, onofflabels, n_neighbors=5)
+    f6 = plot_dist_embeddings(dists, onofflabels, n_neighbors=5)
     f6.savefig(savefolder+'/trained_manifold_embeddings_RFs.png') 
     plt.close()
     
