@@ -25,7 +25,7 @@ class imageFile:
 
     def extract_images(self, imset, subset):
         if(imset=='whitenoise'):
-            full_img_data = np.random.rand(200,100,100)
+            full_img_data = np.random.rand(10000,100,100)-0.5 #uniform in range -0.5 to 0.5
         #load in our images
         elif(imset=='vhlognorm'):
             self.image_files = '/home/vasha/datasets/vanHaterenNaturalImages/VanHaterenNaturalImagesCurated.h5'

@@ -47,7 +47,7 @@ Inpus:
     This is recommended for dictionary plotting.
   title: string for title of figure
 """
-def display_data_tiled(data, acts, normalize=False, title="", prev_fig=None):
+def display_data_acts_tiled(data, acts, normalize=False, title=""):
        
     #calculate mean of each picture of weights
     mean_list =[]
@@ -73,7 +73,7 @@ def display_data_tiled(data, acts, normalize=False, title="", prev_fig=None):
     sub_axis = fig.add_subplot(2,1,1)  
     axis_image = sub_axis.imshow(data, 
                                  cmap="Greys_r",
-                                 interpolation="none")
+                                 interpolation=None)
     axis_image.set_clim(vmin=-1.0, vmax=1.0)
     # Turn off tick labels
     sub_axis.set_yticklabels([])
@@ -95,6 +95,46 @@ def display_data_tiled(data, acts, normalize=False, title="", prev_fig=None):
     
     return (fig, sub_axis, axis_image)
 
+
+def plot_tiled_rfs(data, normalize=False):
+       
+    #calculate mean of each picture of weights
+    mean_list =[]
+    for x in data:
+        mean_list.append(np.linalg.norm(np.reshape(x,-1),ord=2))
+    mean_list = np.array(mean_list)
+    
+    #Rescale data    
+    mean_data = np.mean(data)
+    min_data = np.amin(data)
+    max_data = np.amax(data)
+    data = (((data-min_data)/(max_data-min_data))*2)-1
+    
+    if normalize:
+        data = normalize_data(data)
+    if len(data.shape) >= 3:
+        data = pad_data(data)
+        
+    fig = plt.imshow(data, 
+                     cmap="Greys_r",
+                     interpolation="none")
+    fig.set_clim(vmin=-1.0, vmax=1.0)
+    # Turn off tick labels
+    #fig.set_major_formatter(NullFormatter())
+    plt.xticks([])
+    plt.yticks([])
+    #fig.set_yticklabels([])
+    #fig.set_xticklabels([])
+    plt.tick_params(
+        axis="both",
+        bottom="off",
+        top="off",
+        left="off",
+        right="off") 
+    plt.axis('off')
+    plt.colorbar()
+   
+    return (fig)
 
 """
 Author: Vasha DuTell
@@ -141,7 +181,7 @@ def plotonoff(allws):
             labels.append(0)
 
     #plot
-    fig = plt.figure(figsize=(6,3.5))
+    fig = plt.figure(figsize=(10,6))
     plt.subplot(1,2,1,title='On')    
     oncolors = iter(plt.cm.jet(np.linspace(0,1,len(oncircs))))           
     for onc in oncircs: 
@@ -169,28 +209,37 @@ def measure_plot_dist(weight_mat, norm, normalize=True):
     ## Outputs:
     ## dist: a nneurons by nneurons matrix, with pairwise distances of the weight matrices in each element
     ## fig: plot of the distance matrix as a heatmap
-
+    
     #vectorize
     fwv = weight_mat.reshape(weight_mat.shape[0],-1)
     
     #make each weigth vector unit norm
     if(normalize):
-        fwv = fwv / np.linalg.norm(fwv,axis=0)
+        fwv /= np.linalg.norm(fwv, axis=1, ord=norm)[:,np.newaxis]
         
-    dist = scpd.pdist(fwv,norm) #'euclidean','hamming'
+    dist = scpd.pdist(fwv, metric='minkowski', p=norm)
     dist = scpd.squareform(dist)
-    
-    fig = plt.figure(figsize=(6,6))
-    plt.imshow(dist)
-    plt.colorbar()
+    dists = dist[np.nonzero(np.triu(dist))]
+    meandist = np.mean(dists)
 
+    fig = plt.figure(figsize=(10,4))
+    ax = fig.add_subplot(1, 2, 1)
+    plt.title('Pairwise Distances')
+    plt.pcolormesh(dist)
+    plt.colorbar()
+    
+    ax = fig.add_subplot(1, 2, 2)
+    plt.title('Mean Dist = {0:.3f}, Sqrt(2) = {1:.3f}'.format(meandist, np.sqrt(2)))
+    plt.hist(dists, 50);
+    plt.axvline(meandist,color='r')
+    plt.axvline(np.sqrt(2),color='g')
     return(dist, fig)
 
 
 def measure_plot_act_corrs(activations):
     ccf = np.corrcoef(np.array(activations).T)
-    fig = plt.figure(figsize = (6,6))
-    plt.imshow(ccf)
+    fig = plt.figure(figsize = (10,10))
+    plt.pcolormesh(ccf)
     plt.colorbar()
     
     return(ccf,fig)
@@ -198,7 +247,7 @@ def measure_plot_act_corrs(activations):
 
 def plot_dist_embeddings(distmat, onofflabels, n_neighbors = 10, n_components = 2):
      
-    fig = plt.figure(figsize = (6,6))
+    fig = plt.figure(figsize = (10,10))
 
     #isomap
     iso = manifold.Isomap(n_neighbors, n_components).fit_transform(distmat)
@@ -240,6 +289,36 @@ def plot_dist_embeddings(distmat, onofflabels, n_neighbors = 10, n_components = 
     return(fig)
 
 
+def dist_init_final(weights_kernel_in, final_weights_in, norm = 1):
+    fig = plt.figure(figsize = (10,10))
+    
+    #reshape weights kernel to nnuerons by patchsize by patchsize
+    weights_kernel_in = weights_kernel_in.T
+    weights_kernel_in = weights_kernel_in.reshape(weights_kernel_in.shape[0],
+                                                  np.int(np.sqrt(weights_kernel_in.shape[1])),
+                                                  np.int(np.sqrt(weights_kernel_in.shape[1])))
+
+    
+    #plot initial weights
+    ax = fig.add_subplot(2, 2, 1)
+    ax = plot_tiled_rfs(weights_kernel_in, normalize=False)
+                            
+    #plot final weights
+    ax = fig.add_subplot(2, 2, 2)
+    ax = plot_tiled_rfs(final_weights_in, normalize=False)
+    
+    diff = weights_kernel_in - final_weights_in
+    
+    #plot difference weights
+    ax = fig.add_subplot(2, 2, 3)
+    ax = plot_tiled_rfs(diff, normalize=False)
+    
+    ax = fig.add_subplot(2, 2, 4)
+    ax = plt.hist(diff.flatten())
+    
+    return(fig)
+    
+
 def save_plots(aec,
                activations,
                cost_evolution,
@@ -251,7 +330,8 @@ def save_plots(aec,
                final_inweights_ordered,
                final_outweights_ordered,
                inbias_evolution,
-               activation_evolution):
+               activation_evolution,
+               weights_kernel_in):
     
     savefolder = aec.params['savefolder']
 
@@ -261,7 +341,7 @@ def save_plots(aec,
                                   aec.params['imylen'],
                                   aec.params['nneurons']).T
     final_acts = activations[-1]
-    (f,sa,ai) = display_data_tiled(fiw, final_acts[np.argsort(-final_acts)], normalize=True, title="final_in_weights", prev_fig=None);
+    (f,sa,ai) = display_data_acts_tiled(fiw, final_acts[np.argsort(-final_acts)], normalize=True, title="final_in_weights");
     f.savefig(savefolder+'trained_weights_in.png')
     plt.close()    
     
@@ -269,7 +349,7 @@ def save_plots(aec,
     fow = final_outweights_ordered.reshape(aec.params['imxlen'],
                                   aec.params['imylen'],
                                   aec.params['nneurons']).T
-    (f,sa,ai) = display_data_tiled(fow, final_acts[np.argsort(-final_acts)], normalize=True, title="final_out_weights", prev_fig=None);
+    (f,sa,ai) = display_data_acts_tiled(fow, final_acts[np.argsort(-final_acts)], normalize=True, title="final_out_weights");
     
     f.savefig(savefolder+'trained_weights_out.png')
     plt.close()
@@ -287,23 +367,23 @@ def save_plots(aec,
                                           aec.params['imylen'])) #no rollaxis needed b/c shape is already nnuerons in pos 1.    
   
     for i in range(len(inweights_evolution_r)):
-        (f,sa,ai) = display_data_tiled(inweights_evolution_r[i], activations[-1], normalize=True,title="inweights_evolving", prev_fig=None);
+        (f,sa,ai) = display_data_acts_tiled(inweights_evolution_r[i], activations[-1], normalize=True,title="inweights_evolving");
         f.savefig(savefolder+'param_evolution/inweights_evolution_'+str(i)+'.png')
         plt.close()
         
-        (f,sa,ai) = display_data_tiled(outweights_evolution_r[i], activations[-1], normalize=True,title="outweights_evolving", prev_fig=None);
+        (f,sa,ai) = display_data_acts_tiled(outweights_evolution_r[i], activations[-1], normalize=True,title="outweights_evolving");
         f.savefig(savefolder+'param_evolution/outweights_evolution_'+str(i)+'.png')
         plt.close()
         
     #save plot of activations
-    f1 = plt.figure(figsize=(6,6))
+    f1 = plt.figure(figsize=(10,10))
     plt.plot(final_acts)
     plt.title('Activations')
     f1.savefig(savefolder+'/trained_activations.png') 
     plt.close()
     
     #save weights and cost evolution
-    f2 = plt.figure(figsize=(6,6))
+    f2 = plt.figure(figsize=(10,10))
     plt.subplot(2,1,1,title='Weights_Mean')
     plt.plot(wmean_evolution)
     plt.subplot(2,1,2,title='Cost')
@@ -335,7 +415,7 @@ def save_plots(aec,
     plt.close()
     
     #save distance plots
-    dists, f5 = measure_plot_dist(fiw, norm='euclidean');
+    dists, f5 = measure_plot_dist(fiw, norm = 1);
     f5.savefig(savefolder+'/trained_distances.png') 
     plt.close()
         
@@ -362,5 +442,10 @@ def save_plots(aec,
         plt.bar(range(0, len(inbias_evolution[i])), inbias_evolution[i], edgecolor = 'black', color = 'black')
         f9.savefig(savefolder+'param_evolution/inbias_'+str(i)+'.png')
         plt.close()
+    
+    #save plots of init vs final weights
+    f10 = dist_init_final(weights_kernel_in, inweights_evolution_r[-1], norm = 1);
+    f10.savefig(savefolder+'/train_dist_init_final_inweights.png') 
+    plt.close()
         
         
