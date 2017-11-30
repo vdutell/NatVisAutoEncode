@@ -319,7 +319,7 @@ def dist_init_final(weights_kernel_in, final_weights_in, norm = 1):
     
     return(fig)
 
-def test_activation_distributions(test_acts_ordered, onofflabel, plotother=True, norming=True):
+def test_activation_distributions(test_acts_ordered, onofflabel, plotother=False, norming=True):
     #distribution of activations for on and off cells
     actv = np.array(test_acts_ordered).T
     on = actv[np.where(onofflabel==1)[0]]
@@ -335,7 +335,7 @@ def test_activation_distributions(test_acts_ordered, onofflabel, plotother=True,
     return(fig)
     
 
-def save_plots(aec,
+def save_plots(model,
                cost_evolution,
                wmean_evolution,
                inweights_evolution,
@@ -350,22 +350,22 @@ def save_plots(aec,
                test_acts_ordered):
     
      
-    savefolder = aec.params['savefolder']
+    savefolder = model.params['savefolder']
 
     #Save our final weights
     ## in weights
-    fiw = test_inweights_ordered.reshape(aec.params['imxlen'],
-                                  aec.params['imylen'],
-                                  aec.params['nneurons']).T
+    fiw = test_inweights_ordered.reshape(model.params['imxlen'],
+                                  model.params['imylen'],
+                                  model.params['nneurons']).T
     
     (f,sa,ai) = display_data_acts_tiled(fiw, np.mean(test_acts_ordered,axis=0), normalize=True, title="final_in_weights");
     f.savefig(savefolder+'trained_weights_in.png')
     plt.close()    
     
     ##out weights
-    fow = test_outweights_ordered.reshape(aec.params['imxlen'],
-                                  aec.params['imylen'],
-                                  aec.params['nneurons']).T
+    fow = test_outweights_ordered.reshape(model.params['imxlen'],
+                                  model.params['imylen'],
+                                  model.params['nneurons']).T
     (f,sa,ai) = display_data_acts_tiled(fow, np.mean(test_acts_ordered,axis=0), normalize=True, title="final_out_weights");
     
     f.savefig(savefolder+'trained_weights_out.png')
@@ -374,14 +374,14 @@ def save_plots(aec,
     #save evolving weights
     inweights_evolution_r = np.rollaxis(np.reshape(inweights_evolution,
                                          (len(inweights_evolution),
-                                          aec.params['imxlen'],
-                                          aec.params['imylen'],
-                                          aec.params['nneurons'])),3,1)
+                                          model.params['imxlen'],
+                                          model.params['imylen'],
+                                          model.params['nneurons'])),3,1)
     outweights_evolution_r = np.reshape(outweights_evolution,
                                          (len(outweights_evolution),
-                                          aec.params['nneurons'],
-                                          aec.params['imxlen'],
-                                          aec.params['imylen'])) #no rollaxis needed b/c shape is already nnuerons in pos 1.    
+                                          model.params['nneurons'],
+                                          model.params['imxlen'],
+                                          model.params['imylen'])) #no rollaxis needed b/c shape is already nnuerons in pos 1.    
   
     for i in range(len(inweights_evolution_r)):
         (f,sa,ai) = display_data_acts_tiled(inweights_evolution_r[i], np.mean(test_acts_ordered,axis=0), normalize=True, title="inweights_evolving");
