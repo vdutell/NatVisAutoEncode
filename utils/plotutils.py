@@ -401,11 +401,10 @@ def save_plots(model,
     f.savefig(savefolder+'/trained_in_on_off_RFs.png') 
     plt.close()
     
-        
-    #save plot of trained activations
+    #save plot of trained activations of individual weights
     f = test_activation_distributions(test_acts_ordered, onofflabels, norm=True)
     plt.title('Trained Activations')
-    f.savefig(savefolder+'/trained_activations.png') 
+    f.savefig(savefolder+'/trained_node_activations.png') 
     plt.close()
     
     #save weights and cost evolution
@@ -417,6 +416,8 @@ def save_plots(model,
     plt.tight_layout()
     f.savefig(savefolder+'/summary_weights_cost.png') 
     plt.close()
+    
+    #save reconstruction polots
     
     #show an example image and reconstruction from the last iteration of learning
     patchnum = 3
@@ -437,38 +438,56 @@ def save_plots(model,
     plt.close() 
     
 
-    #save distance plots
-    dists, f = measure_plot_dist(fiw, norm = 1);
-    f.savefig(savefolder+'/trained_distances.png') 
-    plt.close()
-        
-    #save plots of clustering
-    f = plot_dist_embeddings(dists, onofflabels, n_neighbors=5)
-    f.savefig(savefolder+'/trained_manifold_embeddings_RFs.png') 
+    #save weight plots
+    
+    #trained weight distances
+    weight_distmat, f = measure_plot_dist(fiw, norm = 1);
+    f.savefig(savefolder+'/trained_weight_distances.png') 
     plt.close()
     
-    #save activation correlation plots
+    #trained weight distnace clustering
+    f = plot_dist_embeddings(weight_distmat, onofflabels, n_neighbors=5)
+    f.savefig(savefolder+'/trained_weight_distances_manifold_embeddings.png') 
+    plt.close()
+    
+    #init vs final weights
+    f = dist_init_final(iw, fiw, norm = 1);
+    f.savefig(savefolder+'/train_dist_init_final_inweights.png') 
+    plt.close()
+    
+    
+    #save activation plots
+    
+    #trained activaiton distances
+    act_distmat, f = measure_plot_dist(test_acts_ordered[1:1000,:], norm = 1);
+    f.savefig(savefolder+'/trained_act_distances.png') 
+    plt.close()
+    
+    #trained weight distnace clustering
+    f = plot_dist_embeddings(act_distmat, np.ones(act_distmat.shape[0]), n_neighbors=5)
+    f.savefig(savefolder+'/trained_act_distances_manifold_embeddings.png') 
+    plt.close()
+        
+    #trained activation correlation plots
     corrs, f =  measure_plot_act_corrs(test_acts_ordered);
     f.savefig(savefolder+'/trained_act_corrs.png') 
     plt.close()
     
-    #save plots of activation
+    
+    #save plots of activation evolution
     for i in range(len(activation_evolution)):
         f = plt.figure()
         plt.bar(range(0, len(activation_evolution[i])), activation_evolution[i], edgecolor = 'black', color = 'black')
         f.savefig(savefolder+'param_evolution/activation_'+str(i)+'.png')
         plt.close()
         
-    #save plots of inbiases
+    #save plots of inbias evolution
     for i in range(len(inbias_evolution)):
         f = plt.figure()
         plt.bar(range(0, len(inbias_evolution[i])), inbias_evolution[i], edgecolor = 'black', color = 'black')
         f.savefig(savefolder+'param_evolution/inbias_'+str(i)+'.png')
         plt.close()
     
-    #save plots of init vs final weights
-    f = dist_init_final(iw, fiw, norm = 1);
-    f.savefig(savefolder+'/train_dist_init_final_inweights.png') 
-    plt.close()
+
         
         
