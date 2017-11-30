@@ -319,17 +319,18 @@ def dist_init_final(weights_kernel_in, final_weights_in, norm = 1):
     
     return(fig)
 
-def test_activation_distributions(test_acts_ordered, onofflabel, plotother=False, norming=True):
+def test_activation_distributions(test_acts_ordered, onofflabel, norm=True):
     #distribution of activations for on and off cells
     actv = np.array(test_acts_ordered).T
     on = actv[np.where(onofflabel==1)[0]]
     off = actv[np.where(onofflabel==-1)[0]]
     other = actv[np.where(onofflabel==0)[0]]
     fig = plt.figure()
-    p = plt.hist(on.flatten(), 100, alpha = 0.5, label = 'on', normed=norming)
-    p = plt.hist(off.flatten(), 100, alpha = 0.5, label = 'off', normed=norming)
-    if(plotother):
-        p = plt.hist(other.flatten(), 100, alpha = 0.5, label = 'other', normed=norming)
+    p = plt.hist(on.flatten(), 100, alpha = 0.5, label = 'on', normed=norm)
+    p = plt.hist(off.flatten(), 100, alpha = 0.5, label = 'off', normed=norm)
+    #if some are classified as other, plot them
+    if(other.size != 0):
+        p = plt.hist(other.flatten(), 100, alpha = 0.5, label = 'other', normed=norm)
     plt.legend(loc='upper right')
 
     return(fig)
@@ -399,7 +400,7 @@ def save_plots(model,
     
         
     #save plot of trained activations
-    f = test_activation_distributions(test_acts_ordered, onofflabels, norming=True)
+    f = test_activation_distributions(test_acts_ordered, onofflabels, norm=True)
     plt.title('Trained Activations')
     f.savefig(savefolder+'/trained_activations.png') 
     plt.close()
