@@ -356,9 +356,9 @@ def save_plots(model,
                                   model.params['nneurons']).T
     
     ## initial weights
-    iw = weights_kernel_in_ordered.reshape(encoding_model.params['imxlen'],
-                                     encoding_model.params['imylen'],
-                                     encoding_model.params['nneurons']).T
+    iw = weights_kernel_in_ordered.reshape(model.params['imxlen'],
+                                     model.params['imylen'],
+                                     model.params['nneurons']).T
     
     ## trained out weights
     fow = test_outweights_ordered.reshape(model.params['imxlen'],
