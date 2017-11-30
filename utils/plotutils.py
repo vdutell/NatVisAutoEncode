@@ -291,30 +291,27 @@ def plot_dist_embeddings(distmat, onofflabels, n_neighbors = 10, n_components = 
 
 
 def dist_init_final(weights_kernel_in, final_weights_in, norm = 1):
-    fig = plt.figure(figsize = (10,10))
-    
-    #reshape weights kernel to nnuerons by patchsize by patchsize
-    weights_kernel_in = weights_kernel_in.T
-    weights_kernel_in = weights_kernel_in.reshape(weights_kernel_in.shape[0],
-                                                  np.int(np.sqrt(weights_kernel_in.shape[1])),
-                                                  np.int(np.sqrt(weights_kernel_in.shape[1])))
-
+    fig = plt.figure(figsize = (8,8))
     
     #plot initial weights
     ax = fig.add_subplot(2, 2, 1)
+    plt.title('Initial Weights')
     ax = plot_tiled_rfs(weights_kernel_in, normalize=False)
                             
     #plot final weights
     ax = fig.add_subplot(2, 2, 2)
+    plt.title('Final Weights')
     ax = plot_tiled_rfs(final_weights_in, normalize=False)
     
     diff = weights_kernel_in - final_weights_in
     
     #plot difference weights
     ax = fig.add_subplot(2, 2, 3)
+    plt.title('Difference')
     ax = plot_tiled_rfs(diff, normalize=False)
     
     ax = fig.add_subplot(2, 2, 4)
+    plt.title('Difference Distribution')
     ax = plt.hist(diff.flatten(),50)
     
     return(fig)
@@ -343,7 +340,7 @@ def save_plots(model,
                outweights_evolution,
                activation_evolution,
                inbias_evolution,
-               weights_kernel_in,
+               weights_kernel_in_ordered,
                test_patches,
                test_recons,
                test_inweights_ordered,
@@ -352,10 +349,19 @@ def save_plots(model,
     
      
     savefolder = model.params['savefolder']
-
-    #Save our final weights
-    ## in weights
+  
+    ## trained in weights
     fiw = test_inweights_ordered.reshape(model.params['imxlen'],
+                                  model.params['imylen'],
+                                  model.params['nneurons']).T
+    
+    ## initial weights
+    iw = weights_kernel_in_ordered.reshape(encoding_model.params['imxlen'],
+                                     encoding_model.params['imylen'],
+                                     encoding_model.params['nneurons']).T
+    
+    ## trained out weights
+    fow = test_outweights_ordered.reshape(model.params['imxlen'],
                                   model.params['imylen'],
                                   model.params['nneurons']).T
     
@@ -363,10 +369,7 @@ def save_plots(model,
     f.savefig(savefolder+'trained_weights_in.png')
     plt.close()    
     
-    ##out weights
-    fow = test_outweights_ordered.reshape(model.params['imxlen'],
-                                  model.params['imylen'],
-                                  model.params['nneurons']).T
+
     (f,sa,ai) = display_data_acts_tiled(fow, np.mean(test_acts_ordered,axis=0), normalize=True, title="final_out_weights");
     
     f.savefig(savefolder+'trained_weights_out.png')
@@ -464,7 +467,7 @@ def save_plots(model,
         plt.close()
     
     #save plots of init vs final weights
-    f = dist_init_final(weights_kernel_in, inweights_evolution_r[-1], norm = 1);
+    f = dist_init_final(iw, fiw, norm = 1);
     f.savefig(savefolder+'/train_dist_init_final_inweights.png') 
     plt.close()
         
