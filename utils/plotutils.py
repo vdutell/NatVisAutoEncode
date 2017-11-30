@@ -53,7 +53,6 @@ def display_data_acts_tiled(data, acts, normalize=False, title=""):
     mean_list =[]
     for x in data:
         mean_list.append(np.linalg.norm(np.reshape(x,-1),ord=2))
-        #mean_list.append(np.linalg.norm(np.reshape(x,-1)))
     
     mean_list = np.array(mean_list)
     
@@ -68,9 +67,9 @@ def display_data_acts_tiled(data, acts, normalize=False, title=""):
     if len(data.shape) >= 3:
         data = pad_data(data)
         
-    fig = plt.figure(figsize=(10,10))
+    fig = plt.figure(figsize=(10,3))
     
-    sub_axis = fig.add_subplot(2,1,1)  
+    sub_axis = fig.add_subplot(1,2,2)  
     axis_image = sub_axis.imshow(data, 
                                  cmap="Greys_r",
                                  interpolation=None)
@@ -86,8 +85,9 @@ def display_data_acts_tiled(data, acts, normalize=False, title=""):
         left="off",
         right="off")  
     
-    bar_chart = fig.add_subplot(2,1,2)
-    bar_chart.bar(range(0, len(acts)), acts, edgecolor = 'black', color = 'black')
+    bar_chart = fig.add_subplot(1,2,1)
+
+    bar_chart.bar(range(0, np.shape(acts)[0]), acts, edgecolor = 'black', color = 'black')
 
     #bar_chart.title()
     fig.canvas.draw()
@@ -166,7 +166,7 @@ def plotonoff(allws):
     labels = []
 
     circthresh = 0.5
-    onoffthresh = 0
+    onoffthresh = 1e-6
     
     for ws in allws:
         if(np.mean(ws)>onoffthresh):
@@ -197,7 +197,7 @@ def plotonoff(allws):
     plt.yticks([])
     plt.tight_layout()
     
-    return(labels, fig)
+    return(np.array(labels), fig)
 
 def measure_plot_dist(weight_mat, norm, normalize=True):
     ## measures pairwise norm of hidden node weights.
@@ -216,6 +216,7 @@ def measure_plot_dist(weight_mat, norm, normalize=True):
     #make each weigth vector unit norm
     if(normalize):
         fwv /= np.linalg.norm(fwv, axis=1, ord=norm)[:,np.newaxis]
+    #print(np.linalg.norm(fwv,axis=1))
         
     dist = scpd.pdist(fwv, metric='minkowski', p=norm)
     dist = scpd.squareform(dist)
@@ -314,42 +315,58 @@ def dist_init_final(weights_kernel_in, final_weights_in, norm = 1):
     ax = plot_tiled_rfs(diff, normalize=False)
     
     ax = fig.add_subplot(2, 2, 4)
-    ax = plt.hist(diff.flatten())
+    ax = plt.hist(diff.flatten(),50)
     
+    return(fig)
+
+def test_activation_distributions(test_acts_ordered, onofflabel, plotother=True, norming=True):
+    #distribution of activations for on and off cells
+    actv = np.array(test_acts_ordered).T
+    on = actv[np.where(onofflabel==1)[0]]
+    off = actv[np.where(onofflabel==-1)[0]]
+    other = actv[np.where(onofflabel==0)[0]]
+    fig = plt.figure()
+    p = plt.hist(on.flatten(), 100, alpha = 0.5, label = 'on', normed=norming)
+    p = plt.hist(off.flatten(), 100, alpha = 0.5, label = 'off', normed=norming)
+    if(plotother):
+        p = plt.hist(other.flatten(), 100, alpha = 0.5, label = 'other', normed=norming)
+    plt.legend(loc='upper right')
+
     return(fig)
     
 
 def save_plots(aec,
-               activations,
                cost_evolution,
                wmean_evolution,
                inweights_evolution,
                outweights_evolution,
-               images,
-               recons,
-               final_inweights_ordered,
-               final_outweights_ordered,
-               inbias_evolution,
                activation_evolution,
-               weights_kernel_in):
+               inbias_evolution,
+               weights_kernel_in,
+               test_patches,
+               test_recons,
+               test_inweights_ordered,
+               test_outweights_ordered,
+               test_acts_ordered):
     
+     
     savefolder = aec.params['savefolder']
 
     #Save our final weights
     ## in weights
-    fiw = final_inweights_ordered.reshape(aec.params['imxlen'],
+    fiw = test_inweights_ordered.reshape(aec.params['imxlen'],
                                   aec.params['imylen'],
                                   aec.params['nneurons']).T
-    final_acts = activations[-1]
-    (f,sa,ai) = display_data_acts_tiled(fiw, final_acts[np.argsort(-final_acts)], normalize=True, title="final_in_weights");
+    
+    (f,sa,ai) = display_data_acts_tiled(fiw, np.mean(test_acts_ordered,axis=0), normalize=True, title="final_in_weights");
     f.savefig(savefolder+'trained_weights_in.png')
     plt.close()    
     
     ##out weights
-    fow = final_outweights_ordered.reshape(aec.params['imxlen'],
+    fow = test_outweights_ordered.reshape(aec.params['imxlen'],
                                   aec.params['imylen'],
                                   aec.params['nneurons']).T
-    (f,sa,ai) = display_data_acts_tiled(fow, final_acts[np.argsort(-final_acts)], normalize=True, title="final_out_weights");
+    (f,sa,ai) = display_data_acts_tiled(fow, np.mean(test_acts_ordered,axis=0), normalize=True, title="final_out_weights");
     
     f.savefig(savefolder+'trained_weights_out.png')
     plt.close()
@@ -367,85 +384,87 @@ def save_plots(aec,
                                           aec.params['imylen'])) #no rollaxis needed b/c shape is already nnuerons in pos 1.    
   
     for i in range(len(inweights_evolution_r)):
-        (f,sa,ai) = display_data_acts_tiled(inweights_evolution_r[i], activations[-1], normalize=True,title="inweights_evolving");
+        (f,sa,ai) = display_data_acts_tiled(inweights_evolution_r[i], np.mean(test_acts_ordered,axis=0), normalize=True, title="inweights_evolving");
         f.savefig(savefolder+'param_evolution/inweights_evolution_'+str(i)+'.png')
         plt.close()
         
-        (f,sa,ai) = display_data_acts_tiled(outweights_evolution_r[i], activations[-1], normalize=True,title="outweights_evolving");
+        (f,sa,ai) = display_data_acts_tiled(outweights_evolution_r[i],  np.mean(test_acts_ordered,axis=0), normalize=True, title="outweights_evolving");
         f.savefig(savefolder+'param_evolution/outweights_evolution_'+str(i)+'.png')
         plt.close()
         
-    #save plot of activations
-    f1 = plt.figure(figsize=(10,10))
-    plt.plot(final_acts)
-    plt.title('Activations')
-    f1.savefig(savefolder+'/trained_activations.png') 
+    #save plots of on and off tiling
+    onofflabels, f = plotonoff(fiw);
+    f.savefig(savefolder+'/trained_in_on_off_RFs.png') 
+    plt.close()
+    
+        
+    #save plot of trained activations
+    f = test_activation_distributions(test_acts_ordered, onofflabels, norming=True)
+    plt.title('Trained Activations')
+    f.savefig(savefolder+'/trained_activations.png') 
     plt.close()
     
     #save weights and cost evolution
-    f2 = plt.figure(figsize=(10,10))
+    f = plt.figure(figsize=(10,10))
     plt.subplot(2,1,1,title='Weights_Mean')
     plt.plot(wmean_evolution)
     plt.subplot(2,1,2,title='Cost')
     plt.plot(cost_evolution)
     plt.tight_layout()
-    f2.savefig(savefolder+'/summary_weights_cost.png') 
+    f.savefig(savefolder+'/summary_weights_cost.png') 
     plt.close()
     
     #show an example image and reconstruction from the last iteration of learning
     patchnum = 3
     plots = 4
-    f3 = plt.figure()
+    
+    f = plt.figure()
     for i in range(plots):
         plt.subplot(plots,2,2*i+1)#,title='Patch')
-        plt.imshow(images[-1][patchnum+i],cmap='gray',interpolation='none')
+        plt.imshow(test_patches[patchnum+i,:],cmap='gray',interpolation='none')
         plt.colorbar()
         plt.axis('off')
         plt.subplot(plots,2,2*i+2)#,title='Recon')
-        plt.imshow(recons[-1][patchnum+i],cmap='gray',interpolation='none')
+        plt.imshow(test_recons[patchnum+i,:],cmap='gray',interpolation='none')
         plt.colorbar()
         plt.axis('off')
     plt.tight_layout()
-    f3.savefig(savefolder+'/reconstruction.png') 
+    f.savefig(savefolder+'/reconstruction.png') 
     plt.close() 
     
-    #save plots of on and off tiling
-    onofflabels, f4 = plotonoff(fiw);
-    f4.savefig(savefolder+'/trained_in_on_off_RFs.png') 
-    plt.close()
-    
+
     #save distance plots
-    dists, f5 = measure_plot_dist(fiw, norm = 1);
-    f5.savefig(savefolder+'/trained_distances.png') 
+    dists, f = measure_plot_dist(fiw, norm = 1);
+    f.savefig(savefolder+'/trained_distances.png') 
     plt.close()
         
     #save plots of clustering
-    f6 = plot_dist_embeddings(dists, onofflabels, n_neighbors=5)
-    f6.savefig(savefolder+'/trained_manifold_embeddings_RFs.png') 
+    f = plot_dist_embeddings(dists, onofflabels, n_neighbors=5)
+    f.savefig(savefolder+'/trained_manifold_embeddings_RFs.png') 
     plt.close()
     
     #save activation correlation plots
-    corrs, f7 =  measure_plot_act_corrs(activations);
-    f7.savefig(savefolder+'/trained_act_corrs.png') 
+    corrs, f =  measure_plot_act_corrs(test_acts_ordered);
+    f.savefig(savefolder+'/trained_act_corrs.png') 
     plt.close()
     
     #save plots of activation
     for i in range(len(activation_evolution)):
-        f8 = plt.figure()
+        f = plt.figure()
         plt.bar(range(0, len(activation_evolution[i])), activation_evolution[i], edgecolor = 'black', color = 'black')
-        f8.savefig(savefolder+'param_evolution/activation_'+str(i)+'.png')
+        f.savefig(savefolder+'param_evolution/activation_'+str(i)+'.png')
         plt.close()
         
     #save plots of inbiases
     for i in range(len(inbias_evolution)):
-        f9 = plt.figure()
+        f = plt.figure()
         plt.bar(range(0, len(inbias_evolution[i])), inbias_evolution[i], edgecolor = 'black', color = 'black')
-        f9.savefig(savefolder+'param_evolution/inbias_'+str(i)+'.png')
+        f.savefig(savefolder+'param_evolution/inbias_'+str(i)+'.png')
         plt.close()
     
     #save plots of init vs final weights
-    f10 = dist_init_final(weights_kernel_in, inweights_evolution_r[-1], norm = 1);
-    f10.savefig(savefolder+'/train_dist_init_final_inweights.png') 
+    f = dist_init_final(weights_kernel_in, inweights_evolution_r[-1], norm = 1);
+    f.savefig(savefolder+'/train_dist_init_final_inweights.png') 
     plt.close()
         
         

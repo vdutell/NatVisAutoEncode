@@ -132,6 +132,7 @@ def load_images(imset,
                 patch_multiplier = 1,
                 normalize_patch = False,
                 invert_colors = False,
+                start=0,
                 subset = 500):
 
     print("Loading Natural Image Database...")
