@@ -2,6 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib
 import matplotlib.animation as animation
+import utils.plotutils as plu
 
 """
 Author: Dylan Payton taken from FeedbackLCA code
@@ -15,7 +16,9 @@ Args:
 #take the normalized weight matrix and reformate for plotting
 def pad_data(data_full):
     
-    padded_data_full = np.empty((0,96,96)) #space needed for plotting (2+10)*8
+    
+    shape = 96 #space needed for plotting (2+10)*8
+    padded_data_full = np.empty((0,shape,shape)) 
     
     for data in data_full:
         n = int(np.ceil(np.sqrt(data.shape[0])))
@@ -37,21 +40,6 @@ def pad_data(data_full):
     return padded_data_full
 
 
-
-"""
-Author: Dylan Payton taken from FeedbackLCA code
-Display input data as an image with reshaping
-Outputs:
-  fig: index for figure call
-  sub_axis: index for subplot call
-  axis_image: index for imshow call
-Inpus:
-  data: np.ndarray of shape (height, width) or (n, height, width)
-  normalize: [bool] indicating whether the data should be streched (normalized)
-    This is recommended for dictionary plotting.
-  title: string for title of figure
-"""
-
 #calculate mean and data (frames of kernel) from weight matrix
 def calculate_data_to_plot(data, normalize=False):
 
@@ -61,27 +49,8 @@ def calculate_data_to_plot(data, normalize=False):
         mean_list.append([])
         for x in data[t]:
             mean_list[t].append(np.mean(np.absolute(x)))
-        
-    
-    
-    if normalize:
-        data = normalize_data(data)
-    else:
-        #Rescale data    
-        mean_data = np.mean(data)
-        min_data = np.amin(data)
-        max_data = np.amax(data)
-        #print ('M=', mean_data)
-        #print ('min_data=', min_data)
-        #print ('max_data=', max_data)
-        data = (((data-min_data)/(max_data-min_data))*2)-1
-        
-    if len(data.shape) >= 3:
-        data = pad_data(data)
-    
-    return (data, mean_list)
 
-
+            
 def display_data_tiled(data, normalize=False, title="", prev_fig=None):
     
     data, mean_list = calculate_data_to_plot(data)
@@ -120,6 +89,84 @@ def display_data_tiled(data, normalize=False, title="", prev_fig=None):
     ani = animation.FuncAnimation(fig, updatefig, frames=range(len(data)), interval=50, blit=False)
     
     return ani
+
+def plot_temporal_weights(wmatrix):
+    #img = plt.imshow(wmatrix,'Greys')
+    #img = mplu.display_data_tiled(wmatrix)
+    nframes = wmatrix.shape[0]
+    
+    fig = plt.figure(figsize=(10,6));
+    
+    
+    for frame in range(nframes):
+        plt.subplot(1,nframes,frame+1);
+        plu.plot_tiled_rfs(wmatrix[frame].T,colorbar=False);
+        
+    return(fig)
+
+def plot_mov_recon(movie,recon,nframes):
+    
+    #movie shape should be frames x pixels x pixels
+    #view the last nframes of movie and recon
+    movie = movie[-nframes:,:,:]
+    
+    fig = plt.figure(figsize=(10,3));
+    
+    for frame in range(nframes):
+        #plot original frame
+        plt.subplot(2,nframes,frame+1);
+        plt.imshow(movie[frame,:,:],cmap="Greys_r");
+        plt.xticks([])
+        plt.yticks([])
+        
+        #plot reconstruction
+        plt.subplot(2,nframes,frame+1+nframes);
+        plt.imshow(recon[frame,:,:],cmap="Greys_r");
+        plt.xticks([])
+        plt.yticks([])
+        
+    return(fig)
+
+
+
+# def display_data_tiled(data, normalize=False, title="", prev_fig=None):
+    
+#     #data, mean_list = calculate_data_to_plot(data)
+                
+#     fig = plt.figure() #figsize=(10,10))
+    
+#     #print (data)
+#     #print (np.shape(data))
+    
+#     sub_axis = fig.add_subplot(2,2,1)  
+#     axis_image = plt.imshow(data[0,:,:], cmap="Greys_r", interpolation="none", animated=True)
+#     axis_image.set_clim(vmin=-1.0, vmax=1.0)
+#     # Turn off tick labels
+#     sub_axis.set_yticklabels([])
+#     sub_axis.set_xticklabels([])
+#     cbar = fig.colorbar(axis_image)
+#     sub_axis.tick_params(
+#         axis="both",
+#         bottom="off",
+#         top="off",
+#         left="off",
+#         right="off")  
+    
+#     bar_chart = fig.add_subplot(2,2,3)
+#     #print (len(mean_list))
+#     bar_chart.bar(range(0, len(mean_list[0])), mean_list[0], edgecolor = 'black', color = 'black')
+
+#     fig.suptitle(title, y=1.05)
+#     fig.canvas.draw()   
+
+    
+#     def updatefig(i):
+#         axis_image.set_array(data[i,:,:])
+#         return axis_image,
+
+#     ani = animation.FuncAnimation(fig, updatefig, frames=range(len(data)), interval=50, blit=False)
+    
+#     return ani
 
 """
 def display_data_tiled(data, normalize=False, title="", prev_fig=None):
@@ -223,85 +270,116 @@ def plotonoff(allws):
 
 def save_plots(aec,
                cost_evolution,
-                wmean_evolution,
+                activation_evolution,
                 inweights_evolution,
                 outweights_evolution,
-                images,
+                clips,
                 recons,
                 final_inweights,
-                final_outweights):
+                final_outweights,
+                final_activations):
     
     savefolder = aec.params['savefolder']
-
-    #Save our final weights
-    inweights_evolution_r = np.rollaxis(np.reshape(inweights_evolution,
-                                                 (len(inweights_evolution),
-                                                  aec.params['frames_per_channel'],
-                                                  aec.params['imxlen'],
-                                                  aec.params['imylen'],
-                                                  aec.params['nneurons'])),4,2)
-    #(f,sa,ai) = display_data_tiled(inweights_evolution_r[-1], normalize=False, title="final_in_weights", prev_fig=None);
-    #f.savefig(savefolder+'inweights_final.png')    
-    ani = display_data_tiled(inweights_evolution_r[-1], normalize=False, title="final_in_weights", prev_fig=None);
-    ani.save(savefolder+'inweights_final.mp4')
-    plt.close()    
     
-    outweights_evolution_r = np.rollaxis(np.reshape(outweights_evolution,
-                                                  (len(inweights_evolution),
-                                                   aec.params['frames_per_channel'],
-                                                   aec.params['imxlen'],
-                                                   aec.params['imylen'],
-                                                   aec.params['nneurons'])),4,2)
-    
-    #(f,sa,ai) = display_data_tiled(outweights_evolution_r[-1], normalize=False, title="final_out_weights", prev_fig=None);
-    #f.savefig(savefolder+'outweights_final.png')
-    ani = display_data_tiled(outweights_evolution_r[-1], normalize=False, title="final_out_weights", prev_fig=None);
-    ani.save(savefolder+'outweights_final.mp4')
+    #save final weights
+    f = plot_temporal_weights(final_inweights);
+    f.savefig(savefolder+'/final_weights.png')
     plt.close()
+    
+    #save rand movie and reconstruction
+    randomclipindex = np.random.randint(np.shape(clips[0])[0])
+    f = plot_mov_recon(clips[0][randomclipindex],recons[0][randomclipindex],nframes=10);
+    f.savefig(savefolder+'/recon.png')
+    plt.close()
+    
+    #save cost evolution
+    f = plt.figure()
+    p = plt.errorbar(np.arange(len(cost_evolution)),
+                 np.mean(np.array(cost_evolution),axis=1),
+                 yerr=np.std(np.array(cost_evolution),axis=1));
+    plt.title('Evolution of Cost over Learning')
+    f.savefig(savefolder+'/cost.png')
+    plt.close()
+    
+    #save activation evolution
+    f = plt.figure()
+    p = plt.errorbar(np.arange(len(activation_evolution)),
+                 np.mean(np.array(activation_evolution),axis=1),
+                 yerr=np.std(np.array(activation_evolution),axis=1));
+    plt.title('Evolution of Activation over Learning')
+    f.savefig(savefolder+'/activation.png')
+    plt.close()
+    
 
-    #save evolving weights
-    for i in range(len(inweights_evolution_r)):
-        #(f,sa,ai) = display_data_tiled(inweights_evolution_r[i], normalize=False,title="inweights_evolving", prev_fig=None);
-        #f.savefig(savefolder+'/inweights_evolution_'+str(i)+'.png')
-        ani = display_data_tiled(inweights_evolution_r[i], normalize=False,title="inweights_evolving", prev_fig=None);
-        ani.save(savefolder+'/inweights_evolution_'+str(i)+'.mp4')
-        plt.close()
+#     #Save our final weights
+#     inweights_evolution_r = inweights_evolution#np.rollaxis(np.reshape(inweights_evolution,
+#     #                                             (len(inweights_evolution),
+#     #                                              aec.params['framepatchsize'],
+#     #                                              aec.params['pixelpatchsize'],
+#     #                                              aec.params['pixelpatchsize'],
+#     #                                              aec.params['nneurons'])),4,2)
+#     #(f,sa,ai) = display_data_tiled(inweights_evolution_r[-1], normalize=False, title="final_in_weights", prev_fig=None);
+#     #f.savefig(savefolder+'inweights_final.png')    
+#     ani = display_data_tiled(inweights_evolution_r[-1], normalize=False, title="final_in_weights", prev_fig=None);
+#     ani.save(savefolder+'inweights_final.mp4')
+#     plt.close()    
+    
+#     outweights_evolution_r = outweights_evolution #np.rollaxis(np.reshape(outweights_evolution,
+#     #                                              (len(inweights_evolution),
+#     #                                               aec.params['framepatchsize'],
+#     #                                               aec.params['pixelpatchsize'],
+#     #                                               aec.params['pixelpatchsize'],
+#     #                                               aec.params['nneurons'])),4,2)
+    
+#     #(f,sa,ai) = display_data_tiled(outweights_evolution_r[-1], normalize=False, title="final_out_weights", prev_fig=None);
+#     #f.savefig(savefolder+'outweights_final.png')
+#     ani = display_data_tiled(outweights_evolution_r[-1], normalize=False, title="final_out_weights", prev_fig=None);
+#     ani.save(savefolder+'outweights_final.mp4')
+#     plt.close()
+
+#     #save evolving weights
+#     for i in range(len(inweights_evolution_r)):
+#         #(f,sa,ai) = display_data_tiled(inweights_evolution_r[i], normalize=False,title="inweights_evolving", prev_fig=None);
+#         #f.savefig(savefolder+'/inweights_evolution_'+str(i)+'.png')
+#         ani = display_data_tiled(inweights_evolution_r[i], normalize=False,title="inweights_evolving", prev_fig=None);
+#         ani.save(savefolder+'/inweights_evolution_'+str(i)+'.mp4')
+#         plt.close()
         
-        #(f,sa,ai) = display_data_tiled(outweights_evolution_r[i], normalize=False,title="outweights_evolving", prev_fig=None);
-        #f.savefig(savefolder+'/outweights_evolution_'+str(i)+'.png')
-        ani = display_data_tiled(outweights_evolution_r[i], normalize=False,title="outweights_evolving", prev_fig=None);
-        ani.save(savefolder+'/outweights_evolution_'+str(i)+'.mp4')      
-        plt.close()
+#         #(f,sa,ai) = display_data_tiled(outweights_evolution_r[i], normalize=False,title="outweights_evolving", prev_fig=None);
+#         #f.savefig(savefolder+'/outweights_evolution_'+str(i)+'.png')
+#         ani = display_data_tiled(outweights_evolution_r[i], normalize=False,title="outweights_evolving", prev_fig=None);
+#         ani.save(savefolder+'/outweights_evolution_'+str(i)+'.mp4')      
+#         plt.close()
         
         
       
-    #save weights and cost evolution
-    f2 = plt.figure(figsize=(6,6))
-    plt.subplot(2,1,1,title='Weights_Mean')
-    plt.plot(wmean_evolution)
-    plt.subplot(2,1,2,title='Objective')
-    plt.plot(cost_evolution)
-    plt.tight_layout()
-    f2.savefig(savefolder+'/cost_weights.png') 
-    plt.close()
+#     save weights and cost evolution
+#     f2 = plt.figure(figsize=(6,6))
+#     plt.subplot(2,1,1,title='Weights_Mean')
+#     plt.plot(wmean_evolution)
+#     plt.subplot(2,1,2,title='Objective')
+#     plt.plot(cost_evolution)
+#     plt.tight_layout()
+#     f2.savefig(savefolder+'/cost_weights.png') 
+#     plt.close()
     
-    #show an example image and reconstruction 
-    patchnum = 3
-    plots = 4
-    f3 = plt.figure()
-    for i in range(len(inweights_evolution_r)):
-        for j in range(plots):
-            plt.subplot(plots,2,2*j+1)#,title='Patch')
-            plt.imshow(images[i][patchnum+j],cmap='gray',interpolation='none')
-            plt.axis('off')
+#     #show an example image and reconstruction 
+#     patchnum = 3
+#     plots = 4
+#     f3 = plt.figure()
+#     for i in range(len(inweights_evolution_r)):
+#         for j in range(plots):
+#             plt.subplot(plots,2,2*j+1)#,title='Patch')
+#             plt.imshow(images[i][patchnum+j],cmap='gray',interpolation='none')
+#             plt.axis('off')
 
-            plt.subplot(plots,2,2*j+2)#,title='Recon')
-            plt.imshow(recons[i][patchnum+j],cmap='gray',interpolation='none')
-            plt.axis('off')
+#             plt.subplot(plots,2,2*j+2)#,title='Recon')
+#             plt.imshow(recons[i][patchnum+j],cmap='gray',interpolation='none')
+#             plt.axis('off')
 
-        plt.tight_layout()
-        f3.savefig(savefolder+'/reconstruction_'+str(i)+'.png') 
-    plt.close() 
+#         plt.tight_layout()
+#         f3.savefig(savefolder+'/reconstruction_'+str(i)+'.png') 
+#     plt.close() 
     
     #save plots of on and off tiling
     #f4 = plotonoff(inweights_evolution_r[-1]);

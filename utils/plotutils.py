@@ -96,7 +96,7 @@ def display_data_acts_tiled(data, acts, normalize=False, title=""):
     return (fig, sub_axis, axis_image)
 
 
-def plot_tiled_rfs(data, normalize=False):
+def plot_tiled_rfs(data, normalize=False, colorbar=True):
        
     #calculate mean of each picture of weights
     mean_list =[]
@@ -132,7 +132,9 @@ def plot_tiled_rfs(data, normalize=False):
         left="off",
         right="off") 
     plt.axis('off')
-    plt.colorbar()
+    
+    if(colorbar):
+        plt.colorbar()
    
     return (fig)
 
@@ -199,7 +201,27 @@ def plotonoff(allws):
     
     return(np.array(labels), fig)
 
-def measure_plot_dist(weight_mat, norm, normalize=True):
+def plot_test_recons(test_patches, test_recons):
+    #show an example image and reconstruction from the last iteration of learning
+    patchnum = 3
+    plots = 4
+    
+    f = plt.figure(figsize=(10,10))
+    for i in range(plots):
+        plt.subplot(plots,2,2*i+1)#,title='Patch')
+        plt.imshow(test_patches[patchnum+i,:],cmap='gray',interpolation='none')
+        plt.colorbar()
+        plt.axis('off')
+        plt.subplot(plots,2,2*i+2)#,title='Recon')
+        plt.imshow(test_recons[patchnum+i,:],cmap='gray',interpolation='none')
+        plt.colorbar()
+        plt.axis('off')
+    plt.tight_layout()
+    
+    return(f)
+
+
+def measure_plot_dist(weight_mat, norm, normalize=True, plot=True):
     ## measures pairwise norm of hidden node weights.
     ## Inputs:
     ## weight_mat: matrix of weights of shape nneurons by input shape (input shape can be 1 or 2d)
@@ -211,30 +233,39 @@ def measure_plot_dist(weight_mat, norm, normalize=True):
     ## fig: plot of the distance matrix as a heatmap
     
     #vectorize
-    fwv = weight_mat.reshape(weight_mat.shape[0],-1)
+    fwv = weight_mat.reshape(weight_mat.shape[0],-1)    
     
     #make each weigth vector unit norm
     if(normalize):
-        fwv /= np.linalg.norm(fwv, axis=1, ord=norm)[:,np.newaxis]
+        thenorm  = np.linalg.norm(fwv, axis=1, ord=norm)[:,np.newaxis]
+        #cant divide by zero, make those values 1.
+        thenorm[thenorm==0] = 1
+        fwv /= thenorm
     #print(np.linalg.norm(fwv,axis=1))
         
     dist = scpd.pdist(fwv, metric='minkowski', p=norm)
     dist = scpd.squareform(dist)
     dists = dist[np.nonzero(np.triu(dist))]
     meandist = np.mean(dists)
-
-    fig = plt.figure(figsize=(10,4))
-    ax = fig.add_subplot(1, 2, 1)
-    plt.title('Pairwise Distances')
-    plt.pcolormesh(dist)
-    plt.colorbar()
     
-    ax = fig.add_subplot(1, 2, 2)
-    plt.title('Mean Dist = {0:.3f}, Sqrt(2) = {1:.3f}'.format(meandist, np.sqrt(2)))
-    plt.hist(dists, 50);
-    plt.axvline(meandist,color='r')
-    plt.axvline(np.sqrt(2),color='g')
-    return(dist, fig)
+    if(plot):
+
+        fig = plt.figure(figsize=(10,4))
+        ax = fig.add_subplot(1, 2, 1)
+        plt.title('Pairwise Distances')
+        plt.pcolormesh(dist)
+        plt.colorbar()
+
+        ax = fig.add_subplot(1, 2, 2)
+        plt.title('Mean Dist = {0:.3f}, Sqrt(2) = {1:.3f}'.format(meandist, np.sqrt(2)))
+        if(not(np.isnan(dists).any())):
+            plt.hist(dists, 50);
+            plt.axvline(meandist,color='r')
+            plt.axvline(np.sqrt(2),color='g')
+        return(dist, fig)
+    
+    else:
+        return(dists)
 
 
 def measure_plot_act_corrs(activations):
@@ -316,6 +347,7 @@ def dist_init_final(weights_kernel_in, final_weights_in, norm = 1):
     
     return(fig)
 
+
 def test_activation_distributions(test_acts_ordered, onofflabel, norm=True):
     #distribution of activations for on and off cells
     actv = np.array(test_acts_ordered).T
@@ -341,6 +373,7 @@ def save_plots(model,
                activation_evolution,
                inbias_evolution,
                weights_kernel_in_ordered,
+               test_recon_errs,
                test_patches,
                test_recons,
                test_inweights_ordered,
@@ -417,46 +450,43 @@ def save_plots(model,
     f.savefig(savefolder+'/summary_weights_cost.png') 
     plt.close()
     
-    #save reconstruction polots
-    
-    #show an example image and reconstruction from the last iteration of learning
-    patchnum = 3
-    plots = 4
-    
-    f = plt.figure()
-    for i in range(plots):
-        plt.subplot(plots,2,2*i+1)#,title='Patch')
-        plt.imshow(test_patches[patchnum+i,:],cmap='gray',interpolation='none')
-        plt.colorbar()
-        plt.axis('off')
-        plt.subplot(plots,2,2*i+2)#,title='Recon')
-        plt.imshow(test_recons[patchnum+i,:],cmap='gray',interpolation='none')
-        plt.colorbar()
-        plt.axis('off')
-    plt.tight_layout()
+    #save reconstruction polts
+    f = plt.figure(figsize=(10,10))
+    f = plot_test_recons(test_patches, test_recons)
     f.savefig(savefolder+'/reconstruction.png') 
     plt.close() 
     
-
     #save weight plots
     
     #trained weight distances
+    f = plt.figure(figsize=(10,10))
     weight_distmat, f = measure_plot_dist(fiw, norm = 1);
     f.savefig(savefolder+'/trained_weight_distances.png') 
     plt.close()
     
     #trained weight distnace clustering
+    f = plt.figure(figsize=(10,10))
     f = plot_dist_embeddings(weight_distmat, onofflabels, n_neighbors=5)
     f.savefig(savefolder+'/trained_weight_distances_manifold_embeddings.png') 
     plt.close()
     
     #init vs final weights
+    f = plt.figure(figsize=(10,10))
     f = dist_init_final(iw, fiw, norm = 1);
     f.savefig(savefolder+'/train_dist_init_final_inweights.png') 
     plt.close()
     
     
     #save activation plots
+    
+    #trained recon_errs
+    f = plt.figure(figsize=(10,10))
+    p = plt.hist(test_recon_errs, 100)
+    plt.title('Test Reconstruction Errors')
+    plt.title('Trained Reconstruction Error')
+    plt.tight_layout()
+    f.savefig(savefolder+'/trained_recon_err.png') 
+    plt.close()
     
     #trained activaiton distances
     act_distmat, f = measure_plot_dist(test_acts_ordered[1:1000,:], norm = 1);
@@ -489,5 +519,17 @@ def save_plots(model,
         plt.close()
     
 
+def plot_temporal_weights(wmatrix):
+    #img = plt.imshow(wmatrix,'Greys')
+    #img = mplu.display_data_tiled(wmatrix)
+    nframes = wmatrix.shape[0]
+    
+    fig = plt.figure(figsize=(10,6));
+    
+    
+    for frame in range(nframes):
+        plt.subplot(1,nframes,frame+1);
+        plu.plot_tiled_rfs(wmatrix[frame].T,colorbar=False);
         
+    return(fig)
         

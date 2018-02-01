@@ -8,11 +8,11 @@ from scipy import stats
 class imageFile:
     def __init__(self,
                  imset,
-                 patch_edge_size=None,
-                 normalize_im=False,
+                 patch_edge_size = None,
+                 normalize_im_flag = False,
                  patch_multiplier = 1,
-                 normalize_patch=False,
-                 invert_colors=False,
+                 normalize_patch_flag = False,
+                 invert_colors_flag = False,
                  subset=500,
                  rand_state=np.random.RandomState()):
         
@@ -20,13 +20,18 @@ class imageFile:
         self.images = self.extract_images(imset = imset,
                                           subset = subset)
         # process images
-        self.images = self.process_images(self.images, patch_edge_size, normalize_im, 
-                                          patch_multiplier, normalize_patch, invert_colors)
+        self.images = self.process_images(self.images, patch_edge_size, normalize_im_flag, 
+                                          patch_multiplier, normalize_patch_flag, invert_colors_flag)
 
     def extract_images(self, imset, subset):
+        #load in our images        
+        #input is white noise
         if(imset=='whitenoise'):
             full_img_data = np.random.rand(10000,100,100)-0.5 #uniform in range -0.5 to 0.5
-        #load in our images
+        #input is gaussian noise
+        if(imset == 'gaussnoise'):
+            full_img_data = np.random.randn(10000,100,100) #Gaussian about zero -0.5 to 0.5
+        #input is van hateren with log normalization
         elif(imset=='vhlognorm'):
             self.image_files = '/home/vasha/datasets/vanHaterenNaturalImages/VanHaterenNaturalImagesCurated.h5'
             with h5py.File(self.image_files, "r") as f:
@@ -94,13 +99,13 @@ class imageFile:
         return(data)
             
     def process_images(self, full_img_data, patch_edge_size=None, 
-                       normalize_im=False, patch_multiplier = 1,
-                       normalize_patch=False, invert_colors=False):
-        if(normalize_im):
-            print('normalizing full images...')
+                       normalize_im_flag=False, patch_multiplier = 1,
+                       normalize_patch_flag=False, invert_colors_flag=False):
+        if(normalize_im_flag):
+            print('normalizing full images (z-score)...')
             full_img_data = full_img_data - np.mean(full_img_data,axis=(1,2),keepdims=True)
             full_img_data = full_img_data/np.std(full_img_data,axis=(1,2),keepdims=True)
-        if(invert_colors):
+        if(invert_colors_flag):
             print('inverting colors...')
             full_img_data = full_img_data*(-1)
         if patch_edge_size is not None:
@@ -118,8 +123,8 @@ class imageFile:
         else:
             data = full_img_data
             self.num_patches = 1
-        if(normalize_patch):
-            print('normalizing patches...')
+        if(normalize_patch_flag):
+            print('normalizing patches (z-score)...')
             data = data - np.mean(data,axis=(1,2),keepdims=True)
             data = data/np.std(data,axis=(1,2),keepdims=True)
         return data
@@ -128,10 +133,10 @@ class imageFile:
 #check for patchsize
 def load_images(imset,
                 patch_edge_size,
-                normalize_im = False,
+                normalize_im_flag = False,
                 patch_multiplier = 1,
-                normalize_patch = False,
-                invert_colors = False,
+                normalize_patch_flag = False,
+                invert_colors_flag = False,
                 start=0,
                 subset = 500):
 
@@ -139,10 +144,10 @@ def load_images(imset,
     vhimgs = imageFile(
             imset = imset,
             patch_edge_size = patch_edge_size,
-            normalize_im = normalize_im,
+            normalize_im_flag = normalize_im_flag,
             patch_multiplier = patch_multiplier,
-            normalize_patch = False,
-            invert_colors = False,
+            normalize_patch_flag = normalize_patch_flag,
+            invert_colors_flag = False,
             subset = subset)
     print("Done Loading!")    
     np.random.shuffle(vhimgs.images)

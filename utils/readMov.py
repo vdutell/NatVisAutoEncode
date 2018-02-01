@@ -1,6 +1,9 @@
 import numpy as np
+import utils.conversions as cnv
+import imageio
 
-def readMov(path, frames, height, width, barwidth, patch_edge_size=None, time_size = None, normalize_patch=False, normalize_movie=False):
+
+def readMovVH(path, frames, height, width, barwidth):
     """
     Reads in a movie chunk form the van Hatteren database.
     Parameters
@@ -10,7 +13,6 @@ def readMov(path, frames, height, width, barwidth, patch_edge_size=None, time_si
     height:   integer height in pixels of each frame
     width:    integer width in pixels of each frame
     barwidth: integer height of black bar artifact in movie 
-    patch_edge_size: integer length of patch in pixels
     
     Returns
     -------
@@ -33,32 +35,87 @@ def readMov(path, frames, height, width, barwidth, patch_edge_size=None, time_si
     #video is in PAL format (interlaced?) take this into account by taking average of every other frame
     d = np.mean(np.array([d[::2,],d[1::2,]]),axis=0)
 
+    return d
+
+
+def readMovMp4(path):
+    d = []
+    reader = imageio.get_reader(path,'ffmpeg')
+    #fps = reader.get_meta_data()['fps'] #we know this is 24
+    for im in reader:
+        d.append(im)
+    d = np.array(d)[95:200]
+    return d
+        
+    
+
+def get_movie(movie_name, pixel_patch_size, frame_patch_size,
+                          normalize_patch=False, normalize_movie=True):
+
+    if(movie_name=='vh'):
+        fpath = '/home/vasha/datasets/vanHaterenNaturalMovies/vid075'
+        fps = 25 #approximated from http://redwood.berkeley.edu/bruno/data/vid075/README and increased by me.
+        nframes = 9600
+        rawframeh = 128
+        rawframew = 128
+        barw = 16
+        framew = rawframew - barw #in pixels
+        frameh = rawframeh - barw #in pixels
+
+        #vhimgs, params['nimages'] = imr.check_n_load_ims(params['patchsize'], params['iterations'])
+        m = rmov.readMovVH(fpath, nframes, rawframeh, rawframew, barw)
+        
+    if(movie_name=='cheetah'):
+        fpath = '/home/vasha/datasets/cheetahlongclip.mp4'
+        fps = 30
+        ppd = 1./cnv.px2degfull(1)
+        
+        #read in movie
+        m = readMovMp4(fpath)
+        nframes, frameh, framew, ncolorchannels = np.shape(m)
+        #tr_frames, tr_height, tr_width = np.shape(d)
+    
+        #remove color channel:
+        m = np.mean(m,axis=3)
+        print(m.shape)
+
+    #convert to degrees
+    framewdeg = framew/ppd 
+    framehdeg = frameh/ppd
+    
+    #sampling rate
+    deltawdeg = 1./ppd
+    deltahdeg = 1./ppd 
+    deltathz = 1./fps
+
     #normalize_movie
     if(normalize_movie):
         print('normalizing movie...')
-        d = d - np.mean(d)
-        d = d/np.std(d)
+        m = m - np.mean(m)
+        m = m/np.std(m)
     
-    if (patch_edge_size != None):
-        htiles = np.int(np.floor(tr_height/patch_edge_size))
-        wtiles = np.int(np.floor(tr_width/patch_edge_size))
-        ftiles = np.int(np.floor(tr_frames/time_size))    
-        #print('height'+str(tr_width)+'patch'+str(patch_edge_size)+'htiles'+str(htiles))
-        print(np.shape(d))
-        print('making patches...')
-        tiled_d = np.asarray(np.split(d[:,:,0:patch_edge_size*wtiles], wtiles,2)) # tile column-wise
-        print(np.shape(tiled_d))
-        tiled_d = np.asarray(np.split(tiled_d[:,:,0:patch_edge_size*htiles], htiles,2)) #tile row-wise
-        print(np.shape(tiled_d))
-        tiled_d = np.asarray(np.split(tiled_d[:,:,0:time_size*ftiles], ftiles,2)) #tile time-wise
-        print(np.shape(tiled_d))
-        tiled_d = np.transpose(np.reshape(np.transpose(tiled_d,(4,5,3,0,1,2)),(patch_edge_size,patch_edge_size,time_size,-1)),(3,0,1,2)) #stack tiles together
-        print(np.shape(tiled_d))
-        if(normalize_patch):
-            print('normalizing patches...')
-            tiled_d = tiled_d - np.mean(tiled_d,axis=(1,2,3),keepdims=True)
-            tiled_d = tiled_d/np.std(tiled_d,axis=(1,2,3),keepdims=True)
-        return(tiled_d)
+    #make patches
+    if (pixel_patch_size != None):
+        htiles = np.int(np.floor(frameh/pixel_patch_size))
+        wtiles = np.int(np.floor(framew/pixel_patch_size))
+        ftiles = np.int(np.floor(nframes/frame_patch_size))  
         
-    else:
-        return(d)
+        print('making patches...')
+        m = np.asarray(np.split(m[:,:,0:pixel_patch_size*wtiles], wtiles,2)) # tile column-wise
+        m = np.asarray(np.split(m[:,:,0:pixel_patch_size*htiles], htiles,2)) #tile row-wise
+        m = np.asarray(np.split(m[:,:,0:frame_patch_size*ftiles], ftiles,2)) #tile time-wise
+        m = np.transpose(np.reshape(np.transpose(m,(4,5,3,0,1,2)),
+                                   (pixel_patch_size, pixel_patch_size, frame_patch_size,-1)),(3,0,1,2)) #stack tiles together
+        print(m.shape)
+    #normalize patches
+    if(normalize_patch):
+        print('normalizing patches...')
+        m = m - np.mean(m,axis=(1,2,3),keepdims=True)
+        m = m/np.std(m,axis=(1,2,3),keepdims=True)
+        
+    #transpose & shuffle
+    m = np.transpose(m, (0, 3, 1, 2)) #change axis to [batchsize, frame_patch_size, x_patchsize, y_patchsize]
+    np.random.shuffle(m)
+        
+    return(m)
+
