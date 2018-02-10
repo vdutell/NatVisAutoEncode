@@ -3,6 +3,9 @@ import matplotlib.pyplot as plt
 import matplotlib
 import matplotlib.animation as animation
 import utils.plotutils as plu
+from moviepy.editor import VideoClip
+from moviepy.video.io.bindings import mplfig_to_npimage
+
 
 """
 Author: Dylan Payton taken from FeedbackLCA code
@@ -15,7 +18,6 @@ Args:
 
 #take the normalized weight matrix and reformate for plotting
 def pad_data(data_full):
-    
     
     shape = 96 #space needed for plotting (2+10)*8
     padded_data_full = np.empty((0,shape,shape)) 
@@ -51,7 +53,7 @@ def calculate_data_to_plot(data, normalize=False):
             mean_list[t].append(np.mean(np.absolute(x)))
 
             
-def display_data_tiled(data, normalize=False, title="", prev_fig=None):
+def display_movie_data_tiled(data, normalize=False, title="", prev_fig=None):
     
     data, mean_list = calculate_data_to_plot(data)
                 
@@ -90,17 +92,24 @@ def display_data_tiled(data, normalize=False, title="", prev_fig=None):
     
     return ani
 
-def plot_temporal_weights(wmatrix):
-    #img = plt.imshow(wmatrix,'Greys')
-    #img = mplu.display_data_tiled(wmatrix)
+def plot_temporal_weights(wmatrix, rescale=True):
+    
+    #wmatrix is of shape (nframes, (nframes, pixels, pixels)?)
+
+    if(rescale):
+        mean_data = np.mean(wmatrix)
+        min_data = np.amin(wmatrix)
+        max_data = np.amax(wmatrix)
+        wmatrix = (((wmatrix-min_data)/(max_data-min_data))*2)-1
+
     nframes = wmatrix.shape[0]
     
     fig = plt.figure(figsize=(10,6));
-    
-    
-    for frame in range(nframes):
-        plt.subplot(1,nframes,frame+1);
-        plu.plot_tiled_rfs(wmatrix[frame].T,colorbar=False);
+    for framenum in range(nframes):
+        frame = wmatrix[framenum,:,:,:]
+        padded = plu.pad_data(frame.T)
+        #plt.subplot(1,nframes,frame+1);
+        #plu.plot_tiled_rfs(wmatrix[frame].T,colorbar=False);
         
     return(fig)
 
@@ -168,7 +177,7 @@ def plot_mov_recon(movie,recon,nframes):
     
 #     return ani
 
-"""
+
 def display_data_tiled(data, normalize=False, title="", prev_fig=None):
  
     #calculate mean of each picture of weights
@@ -216,7 +225,64 @@ def display_data_tiled(data, normalize=False, title="", prev_fig=None):
     #plt.show()
     
     return (fig, sub_axis, axis_image)
-"""
+
+
+def weights_movieclip(wmatrix,rescale=True):
+    ''' Function to made movie clips from weight vectors
+
+    Input: weight matrix (must be in shape (nframes, pixels, pixels, neurons))
+    Output: MoviePy animation file displaying spatio-temporal weight vectors.
+            (Movie is 1 second long regardless of number of frames)
+    
+    '''
+    
+    nframes = wmatrix.shape[0]  
+    
+    if(rescale):
+        mean_data = np.mean(wmatrix)
+        min_data = np.amin(wmatrix)
+        max_data = np.amax(wmatrix)
+        wmatrix = (((wmatrix-min_data)/(max_data-min_data))*2)-1
+        
+    frames_list = []
+    
+#     for framenum in range(nframes):
+#         frame = wmatrix[framenum,:,:,:]
+#         #plt.subplot(1,nframes,frame+1);
+#         #plu.plot_tiled_rfs(wmatrix[frame].T,colorbar=False);
+#         frame = plu.pad_data(frame.T)
+#         frame = np.transpose(np.tile(frame,(3,1,1)),axes=(1,2,0))
+#         frames_list.append(frame)
+    
+    fig, ax = plt.subplots()
+    
+    def make_frame(t):
+        """ Generates and returns the frame for time t. """
+        frame = wmatrix[np.int(t),:,:,:]
+        #plt.subplot(1,nframes,frame+1);
+        #plu.plot_tiled_rfs(wmatrix[frame].T,colorbar=False);
+        frame = plu.pad_data(frame.T)
+        #frame = np.transpose(np.tile(frame,(3,1,1)),axes=(1,2,0))
+        
+        #plotting
+        ax.clear()
+        plt.imshow(frame,cmap='Greys_r')
+        ax.set_yticklabels([])
+        ax.set_xticklabels([])
+        ax.tick_params(
+            axis="both",
+            bottom="off",
+            top="off",
+            left="off",
+            right="off")  
+        
+        return mplfig_to_npimage(fig) # return a RGB image
+   
+    animation = mpy.VideoClip(make_frame, duration=nframes);
+    #animation.write_videofile("weights_movie.mp4", fps=nframes)
+    animation.write_gif("weight_movie.gif", fps=nframes);
+    
+    return(animation)
 
 
 """
@@ -351,8 +417,6 @@ def save_plots(aec,
 #         ani.save(savefolder+'/outweights_evolution_'+str(i)+'.mp4')      
 #         plt.close()
         
-        
-      
 #     save weights and cost evolution
 #     f2 = plt.figure(figsize=(6,6))
 #     plt.subplot(2,1,1,title='Weights_Mean')

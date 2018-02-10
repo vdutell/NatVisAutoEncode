@@ -67,7 +67,7 @@ class imageFile:
             full_img_data = np.array(full_img_data)
 
             #normalize each full image - divide by geom norm and log transform 
-            invn = 1/np.prod([full_img_data.shape[1],full_img_data.shape[2]])
+            #invn = 1/np.prod([full_img_data.shape[1],full_img_data.shape[2]])
             geom_means = stats.mstats.gmean(full_img_data+1,axis=(1,2))[:,np.newaxis,np.newaxis]
             full_img_data = np.log(full_img_data+1) - np.log(geom_means)
 

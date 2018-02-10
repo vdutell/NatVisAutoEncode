@@ -1,6 +1,8 @@
 import numpy as np
 import utils.conversions as cnv
 import imageio
+from scipy import stats
+from moviepy.editor import VideoFileClip
 
 
 def readMovVH(path, frames, height, width, barwidth):
@@ -44,10 +46,8 @@ def readMovMp4(path):
     #fps = reader.get_meta_data()['fps'] #we know this is 24
     for im in reader:
         d.append(im)
-    d = np.array(d)[95:200]
-    return d
-        
-    
+    return np.array(d)
+     
 
 def get_movie(movie_name, pixel_patch_size, frame_patch_size,
                           normalize_patch=False, normalize_movie=True):
@@ -64,20 +64,36 @@ def get_movie(movie_name, pixel_patch_size, frame_patch_size,
 
         #vhimgs, params['nimages'] = imr.check_n_load_ims(params['patchsize'], params['iterations'])
         m = rmov.readMovVH(fpath, nframes, rawframeh, rawframew, barw)
-        
+
     if(movie_name=='cheetah'):
         fpath = '/home/vasha/datasets/cheetahlongclip.mp4'
         fps = 30
         ppd = 1./cnv.px2degfull(1)
-        
         #read in movie
         m = readMovMp4(fpath)
+        m = m[95:200] #only part of thee movie
         nframes, frameh, framew, ncolorchannels = np.shape(m)
         #tr_frames, tr_height, tr_width = np.shape(d)
-    
+ 
         #remove color channel:
         m = np.mean(m,axis=3)
         print(m.shape)
+        
+        
+    if(movie_name=='snow_monkeys'):
+        fpath = '/home/vasha/datasets/YouTubeDownloads/SnowMonkeys720p.webm'
+        fps = 30
+        ppd = 1./cnv.px2degfull(1)
+        #m = VideoFileClip(fpath).subclip(50,150)
+        m = readMovMp4(fpath)
+        m = m[300:420] #only part of the movie
+        nframes, frameh, framew, ncolorchannels = np.shape(m)
+        
+        #remove color channel:
+        m = np.mean(m,axis=3)
+        print(m.shape)
+        
+
 
     #convert to degrees
     framewdeg = framew/ppd 
@@ -110,9 +126,16 @@ def get_movie(movie_name, pixel_patch_size, frame_patch_size,
     #normalize patches
     if(normalize_patch):
         print('normalizing patches...')
-        m = m - np.mean(m,axis=(1,2,3),keepdims=True)
-        m = m/np.std(m,axis=(1,2,3),keepdims=True)
+        #m = m - np.mean(m,axis=(1,2,3),keepdims=True)
+        #m = m/np.std(m,axis=(1,2,3),keepdims=True)
         
+        #normalize each full patch - divide by geom norm and log transform 
+        #invn = 1/np.prod([m.shape[1],m.shape[2],m.shape[3]])
+        m = np.nan_to_num(np.log(m))
+        geom_means = stats.mstats.gmean(m+0.01,axis=(1,2,3))[:,np.newaxis,np.newaxis,np.newaxis]
+        print(np.min(geom_means))
+        m = m - np.nan_to_num(geom_means)
+
     #transpose & shuffle
     m = np.transpose(m, (0, 3, 1, 2)) #change axis to [batchsize, frame_patch_size, x_patchsize, y_patchsize]
     np.random.shuffle(m)

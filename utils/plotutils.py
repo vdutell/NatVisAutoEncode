@@ -96,24 +96,22 @@ def display_data_acts_tiled(data, acts, normalize=False, title=""):
     return (fig, sub_axis, axis_image)
 
 
-def plot_tiled_rfs(data, normalize=False, colorbar=True):
-       
-    #calculate mean of each picture of weights
-    mean_list =[]
-    for x in data:
-        mean_list.append(np.linalg.norm(np.reshape(x,-1),ord=2))
-    mean_list = np.array(mean_list)
+def plot_tiled_rfs(data, rescale=False, normalize=False, colorbar=True):
+    #data is of shape ???
     
-    #Rescale data    
-    mean_data = np.mean(data)
-    min_data = np.amin(data)
-    max_data = np.amax(data)
-    data = (((data-min_data)/(max_data-min_data))*2)-1
+    #Rescale data
+    if(rescale):
+        mean_data = np.mean(data)
+        min_data = np.amin(data)
+        max_data = np.amax(data)
+        data = (((data-min_data)/(max_data-min_data))*2)-1
     
     if normalize:
         data = normalize_data(data)
+        
     if len(data.shape) >= 3:
         data = pad_data(data)
+    #print(data.shape)
         
     fig = plt.imshow(data, 
                      cmap="Greys_r",
