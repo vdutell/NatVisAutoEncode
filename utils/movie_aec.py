@@ -39,7 +39,7 @@ class movie_aec_model(object):
                                                            self.params["framepatchsize"],
                                                            self.params["pixelpatchsize"],
                                                            self.params["pixelpatchsize"]])
-                    self.xt = tf.transpose(self.x,perm=(0,3,2,1))
+                    #self.xt = tf.transpose(self.x,perm=(0,3,2,1))
 #                     self.xvec = tf.reshape(self.x,[self.params["batchsize"], 
 #                                                    params['clipvec_len']]
                    
@@ -55,8 +55,12 @@ class movie_aec_model(object):
             #function to add noise
             with tf.name_scope("add_noise"):
                 def add_noise(input_layer, std):
-                    noise = tf.random_normal(shape=tf.shape(input_layer), mean=0.0, stddev=std, dtype=tf.float32) 
-                    return tf.add(input_layer,noise)
+                    noise = tf.random_normal(shape=tf.shape(input_layer),
+                                             mean=0.0,
+                                             stddev=std,
+                                             dtype=tf.float32) 
+                    return tf.add(input_layer,
+                                  noise)
 
             #weights
             with tf.variable_scope("weights"):
@@ -66,22 +70,37 @@ class movie_aec_model(object):
 #                                                    1,
 #                                                    self.params['nneurons']],
 #                                                    dtype=tf.float32,stddev=0.1)
-                weights_kernel = tf.random_normal([self.params['frames_per_channel'],
+#                weights_kernel = tf.random_normal([self.params['frames_per_channel'],
+#                                                   self.params['pixelpatchsize'], 
+#                                                   self.params['pixelpatchsize'],
+#                                                   self.params['nneurons']],
+#                                                   dtype=tf.float32)
+                weights_kernel = tf.random_uniform([self.params['frames_per_channel'],
                                                    self.params['pixelpatchsize'], 
                                                    self.params['pixelpatchsize'],
                                                    self.params['nneurons']],
-                                                   dtype=tf.float32)
+                                                   dtype=tf.float32,
+                                                   minval=-1)
                                            
 #                 weights_kernel = tf.random_normal([params['clipvec_len'],
 #                                                    self.params['nneurons']]
 
-                self.win = tf.get_variable(name='weights_in',initializer = weights_kernel)
-                self.wout = tf.get_variable(name='weights_out',initializer = tf.transpose(weights_kernel))
+                self.win = tf.get_variable(name='weights_in',
+                                           initializer = weights_kernel)
+    
+                self.wout = tf.get_variable(name='weights_out',
+                                            initializer=tf.transpose(weights_kernel))
             
                 #self.wout@tf.transpose(self.wout)
 
-                #wnormalizer = tf.norm(self.win, ord='euclidean',axis=0)
-                #self.win = self.win * (1./wnormalizer)
+                wnormalizer = tf.norm(tf.reshape(self.win,
+                                                (-1, self.params['nneurons'])),
+                                      ord='euclidean',
+                                      axis=0)
+                
+                wnormalizer = tf.reshape(wnormalizer,
+                                         (1,1,1,-1))
+                self.win = self.win * (1./wnormalizer)
             
                 #self.wout = tf.transpose(self.win)
                 #self.wout = tf.get_variable('weights_out', initializer=tf.transpose(weights_kernel))
@@ -96,7 +115,8 @@ class movie_aec_model(object):
 
             #bias
             with tf.variable_scope("bias"):
-                self.bias = tf.zeros([self.params['nneurons']],dtype=tf.float32) #tf.Variable(tf.random_normal([self.params['nneurons']],dtype=tf.float32))
+                self.bias = tf.zeros([self.params['nneurons']],
+                                     dtype=tf.float32) #tf.Variable(tf.random_normal([self.params['nneurons']],dtype=tf.float32))
 
             #learning_rate
             with tf.name_scope('learning_rate'):
@@ -118,7 +138,7 @@ class movie_aec_model(object):
             with tf.name_scope("encoding"):
                 #calculate input
                 
-                noised_input = add_noise(self.xt,self.params['noise_x'])
+                noised_input = add_noise(self.x,self.params['noise_x'])
                 #expand dims for 1 channel: Need to change this for color channel
                 #linearin = tf.nn.conv3d(noised_input, self.win, strides= [1,
                 #                                                          1,

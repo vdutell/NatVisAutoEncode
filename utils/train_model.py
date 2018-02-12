@@ -96,9 +96,9 @@ def train_movie_model(aec,m):
                         recons.append(recon)#(recons_transformed[0][0])
                         
                         #plot example
-                        clear_output()
-                        mplu.plot_temporal_weights(wout.T)
-                        plt.show()
+                        #clear_output()
+                        #mplu.plot_temporal_weights(wout.T)
+                        #plt.show()
 
                 #end = clock()
                 #print ('Time:', "%.1f" % (end-start),'sec')

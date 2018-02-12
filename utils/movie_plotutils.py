@@ -94,7 +94,7 @@ def display_movie_data_tiled(data, normalize=False, title="", prev_fig=None):
 
 def plot_temporal_weights(wmatrix, rescale=True):
     
-    #wmatrix is of shape (nframes, (nframes, pixels, pixels)?)
+    #wmatrix is of shape (nframes, (neurons, pixels, pixels)?)
 
     if(rescale):
         mean_data = np.mean(wmatrix)
@@ -108,8 +108,8 @@ def plot_temporal_weights(wmatrix, rescale=True):
     for framenum in range(nframes):
         frame = wmatrix[framenum,:,:,:]
         padded = plu.pad_data(frame.T)
-        #plt.subplot(1,nframes,frame+1);
-        #plu.plot_tiled_rfs(wmatrix[frame].T,colorbar=False);
+        plt.subplot(1,nframes,frame+1);
+        plu.plot_tiled_rfs(wmatrix[frame].T,colorbar=False);
         
     return(fig)
 
