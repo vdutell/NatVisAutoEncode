@@ -214,7 +214,7 @@ class movie_aec_model(object):
             #calculate cost
             with tf.name_scope("cost_function"):
                 #self.lambda_act = tf.reduce_mean(self.activation+1e-5, axis=0)
-                self.cost = self.recon_err #+ 1e-3*tf.reduce_mean(self.lambda_act)
+                self.cost = self.recon_err + tf.reduce_mean(self.lambda_act)
  
             #train our model
             with tf.name_scope("training_step"):
